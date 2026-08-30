@@ -210,7 +210,7 @@ export default function HomePage() {
               </div>
 
               {/* Trust Stats */}
-              <div className="flex items-center justify-center lg:justify-start gap-8 mt-10 pt-8 border-t border-border/60 animate-fade-in-up stagger-4">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 sm:gap-8 mt-10 pt-8 border-t border-border/60 animate-fade-in-up stagger-4">
                 {[
                   { value: "10K+", label: "Happy Customers" },
                   { value: "500+", label: "Unique Designs" },
@@ -244,7 +244,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Floating Glass Badges (Visible on Mobile & Desktop) */}
-                <div className="absolute -right-1 sm:-right-2 top-2 sm:top-10 z-20 glass-gold rounded-xl sm:rounded-2xl p-2 sm:p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] animate-float stagger-2 flex items-center gap-2 sm:gap-3 backdrop-blur-md border border-accent/20">
+                <div className="absolute right-0 sm:-right-2 top-2 sm:top-10 z-20 glass-gold rounded-xl sm:rounded-2xl p-2 sm:p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] animate-float stagger-2 flex items-center gap-2 sm:gap-3 backdrop-blur-md border border-accent/20">
                   <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-[10px] sm:text-xs">
                     22K
                   </div>
@@ -254,7 +254,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="absolute -left-1 sm:-left-2 bottom-2 sm:bottom-10 z-20 glass-gold rounded-xl sm:rounded-2xl p-2 sm:p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] animate-float stagger-4 flex items-center gap-2 sm:gap-3 backdrop-blur-md border border-accent/20">
+                <div className="absolute left-0 sm:-left-2 bottom-2 sm:bottom-10 z-20 glass-gold rounded-xl sm:rounded-2xl p-2 sm:p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] animate-float stagger-4 flex items-center gap-2 sm:gap-3 backdrop-blur-md border border-accent/20">
                   <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent">
                     <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -586,12 +586,12 @@ export default function HomePage() {
               <input
                 type="email"
                 placeholder="Your email address"
-                className="flex-1 bg-white border border-border rounded-l-full px-6 py-3.5 font-body text-sm outline-none focus:border-accent transition-colors duration-300"
+                className="flex-1 min-w-0 bg-white border border-border rounded-l-full px-4 sm:px-6 py-3.5 font-body text-sm outline-none focus:border-accent transition-colors duration-300"
                 aria-label="Email for newsletter"
               />
               <button
                 type="submit"
-                className="bg-accent hover:bg-accent-dark text-on-accent px-8 py-3.5 rounded-r-full font-body text-xs uppercase tracking-widest font-semibold transition-colors duration-300 cursor-pointer shadow-sm"
+                className="bg-accent hover:bg-accent-dark text-on-accent px-5 sm:px-8 py-3.5 rounded-r-full font-body text-xs uppercase tracking-widest font-semibold transition-colors duration-300 cursor-pointer shadow-sm"
               >
                 Subscribe
               </button>

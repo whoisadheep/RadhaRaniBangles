@@ -31,8 +31,8 @@ export function Navbar() {
   return (
     <>
       {/* ── Announcement Bar ── */}
-      <div className="bg-primary text-on-primary text-center py-2 px-4 text-[11px] tracking-widest font-body uppercase">
-        Free Shipping on Orders Above ₹2,999 &nbsp;|&nbsp; Use Code:{" "}
+      <div className="bg-primary text-on-primary text-center py-2 px-3 sm:px-4 text-[10px] sm:text-[11px] tracking-wider sm:tracking-widest font-body uppercase">
+        Free Shipping on Orders Above ₹2,999 <span className="hidden xs:inline">&nbsp;|&nbsp;</span><span className="inline xs:hidden"> · </span>Use Code:{" "}
         <span className="font-semibold text-accent-light">RADHA10</span>
       </div>
 
@@ -222,7 +222,7 @@ export function Navbar() {
 
       {/* ── Mobile Menu ── */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
+        <div className="fixed inset-0 z-[60] lg:hidden overflow-hidden">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}

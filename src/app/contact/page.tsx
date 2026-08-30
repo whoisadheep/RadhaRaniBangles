@@ -114,7 +114,7 @@ export default function ContactPage() {
 
             {/* Contact Form */}
             <div className="lg:col-span-3 animate-fade-in-up stagger-1">
-              <div className="glass-gold rounded-2xl p-8 lg:p-10">
+              <div className="glass-gold rounded-2xl p-5 sm:p-8 lg:p-10">
                 <h2 className="font-heading text-2xl font-semibold text-primary mb-2">
                   Send Us a Message
                 </h2>

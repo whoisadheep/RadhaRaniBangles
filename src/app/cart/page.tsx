@@ -120,8 +120,8 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* Quantity */}
-                      <div className="flex items-center justify-start sm:justify-center mt-4 sm:mt-0">
+                      {/* Desktop Quantity, Total, Remove */}
+                      <div className="hidden sm:flex items-center justify-center">
                         <div className="inline-flex items-center border border-border rounded-lg">
                           <button
                             onClick={() => updateQty(index, -1)}
@@ -143,21 +143,56 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* Total */}
-                      <p className="font-body text-base font-semibold text-primary text-right mt-4 sm:mt-0">
+                      <p className="hidden sm:block font-body text-base font-semibold text-primary text-right">
                         {formatPrice(item.product.price * item.quantity)}
                       </p>
 
-                      {/* Remove */}
                       <button
                         onClick={() => removeItem(index)}
-                        className="mt-4 sm:mt-0 w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                        className="hidden sm:flex w-8 h-8 items-center justify-center text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                         aria-label={`Remove ${item.product.name}`}
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                           <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                       </button>
+
+                      {/* Mobile Row: Quantity + Price + Remove */}
+                      <div className="flex sm:hidden items-center justify-between mt-4 pt-3 border-t border-border/40">
+                        <div className="inline-flex items-center border border-border rounded-lg">
+                          <button
+                            onClick={() => updateQty(index, -1)}
+                            className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-accent transition-colors cursor-pointer"
+                            aria-label="Decrease"
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                          </button>
+                          <span className="w-8 h-7 flex items-center justify-center font-body text-xs font-semibold border-x border-border">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQty(index, 1)}
+                            className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-accent transition-colors cursor-pointer"
+                            aria-label="Increase"
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                          </button>
+                        </div>
+
+                        <p className="font-body text-sm font-semibold text-primary">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </p>
+
+                        <button
+                          onClick={() => removeItem(index)}
+                          className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                          aria-label={`Remove ${item.product.name}`}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -213,7 +248,7 @@ export default function CartPage() {
                       <input
                         type="text"
                         placeholder="Coupon code"
-                        className="flex-1 bg-white/80 border border-border rounded-lg px-4 py-2.5 font-body text-sm outline-none focus:border-accent transition-colors"
+                        className="flex-1 min-w-0 bg-white/80 border border-border rounded-lg px-4 py-2.5 font-body text-sm outline-none focus:border-accent transition-colors"
                         aria-label="Coupon code"
                       />
                       <button

@@ -131,7 +131,7 @@ export function Footer() {
               <input
                 type="email"
                 placeholder="Your email"
-                className="flex-1 bg-white/10 border border-white/15 rounded-l-md px-4 py-2.5 text-sm font-body text-white placeholder:text-white/30 outline-none focus:border-accent transition-colors duration-300"
+                className="flex-1 min-w-0 bg-white/10 border border-white/15 rounded-l-md px-4 py-2.5 text-sm font-body text-white placeholder:text-white/30 outline-none focus:border-accent transition-colors duration-300"
                 aria-label="Email for newsletter"
               />
               <button
@@ -153,7 +153,7 @@ export function Footer() {
           </p>
 
           {/* Payment Icons */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {["Visa", "Mastercard", "UPI", "RuPay"].map((method) => (
               <span
                 key={method}

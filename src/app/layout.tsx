@@ -27,11 +27,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-background text-foreground">
+      <body className="bg-background text-foreground w-full max-w-full overflow-x-hidden">
         <LuxuryPreloader />
         <SmoothScroll>
           <Navbar />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen w-full max-w-full overflow-x-hidden">{children}</main>
           <Footer />
         </SmoothScroll>
       </body>

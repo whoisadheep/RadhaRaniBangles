@@ -161,7 +161,7 @@ export default function CollectionsPage() {
             {/* ── Products Area ── */}
             <div className="flex-1">
               {/* Toolbar */}
-              <div className="flex items-center justify-between mb-8 pb-4 border-b border-border">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-border">
                 <p className="font-body text-sm text-muted-foreground">
                   Showing{" "}
                   <span className="font-semibold text-primary">{filtered.length}</span>{" "}

@@ -48,7 +48,7 @@ export default function ProductPage() {
       <div className="bg-cream/50 border-b border-border/50">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3">
           <nav aria-label="Breadcrumb">
-            <ol className="flex items-center gap-2 font-body text-xs uppercase tracking-widest text-muted-foreground">
+            <ol className="flex flex-wrap items-center gap-2 font-body text-xs uppercase tracking-widest text-muted-foreground">
               <li>
                 <Link href="/" className="hover:text-accent transition-colors cursor-pointer">Home</Link>
               </li>
@@ -57,7 +57,7 @@ export default function ProductPage() {
                 <Link href="/collections" className="hover:text-accent transition-colors cursor-pointer">Collections</Link>
               </li>
               <li aria-hidden="true">/</li>
-              <li className="text-primary font-medium truncate max-w-[200px]">{product.name}</li>
+              <li className="text-primary font-medium truncate max-w-[120px] sm:max-w-[200px]">{product.name}</li>
             </ol>
           </nav>
         </div>
@@ -92,7 +92,7 @@ export default function ProductPage() {
               </div>
 
               {/* Thumbnail strip */}
-              <div className="flex gap-3 mt-4">
+              <div className="flex gap-3 mt-4 overflow-x-auto pb-1">
                 {product.images.map((imgSrc, i) => (
                   <button
                     key={i}
@@ -297,7 +297,7 @@ export default function ProductPage() {
 
           {/* ── Tabs ── */}
           <div className="mt-16 lg:mt-24">
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-border overflow-x-auto">
               {[
                 { key: "description" as const, label: "Description" },
                 { key: "details" as const, label: "Details & Care" },
@@ -307,7 +307,7 @@ export default function ProductPage() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    "font-body text-sm uppercase tracking-wider px-6 py-4 transition-all duration-300 cursor-pointer border-b-2 -mb-px",
+                    "font-body text-xs sm:text-sm uppercase tracking-wider px-4 sm:px-6 py-3 sm:py-4 transition-all duration-300 cursor-pointer border-b-2 -mb-px whitespace-nowrap",
                     activeTab === tab.key
                       ? "border-accent text-accent font-semibold"
                       : "border-transparent text-muted-foreground hover:text-primary"

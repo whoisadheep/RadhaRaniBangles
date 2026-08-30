@@ -69,7 +69,7 @@ export default function AboutPage() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 mt-10 pt-8 border-t border-border">
+              <div className="grid grid-cols-3 gap-3 sm:gap-6 mt-10 pt-8 border-t border-border">
                 {[
                   { value: "10,000+", label: "Happy Customers" },
                   { value: "500+", label: "Unique Designs" },
