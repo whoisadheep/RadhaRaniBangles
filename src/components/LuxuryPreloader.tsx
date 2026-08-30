@@ -2,32 +2,70 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { products, categories, testimonials } from "@/lib/data";
 
 /* ═══════════════════════════════════════════════════
    RADHA RANI BANGLES — "Self-Drawing Bangle" Preloader
-   
+
    Concept: A golden bangle draws itself from nothing,
    the brand name sweeps in with a gold reveal, and the
    screen splits open like a jewelry box.
+
+   All images from data + pages are preloaded before
+   the site is revealed.
    ═══════════════════════════════════════════════════ */
 
-const CRITICAL_IMAGES = [
-  "/images/hero-bangles.png",
-  "/images/categories/gold-bangles.png",
-  "/images/categories/silver-bangles.png",
-  "/images/categories/diamond-bangles.png",
-  "/images/categories/kundan-bangles.png",
-  "/images/categories/bridal-sets.png",
-  "/images/categories/daily-wear.png",
-  "/images/products/product-1.jpg",
-  "/images/products/product-2.jpg",
-  "/images/products/product-3.jpg",
-  "/images/products/product-4.jpg",
-  "/images/products/product-5.jpg",
-  "/images/products/product-6.jpg",
-  "/images/products/product-7.jpg",
-  "/images/products/product-8.jpg",
-];
+/** Collect EVERY image used across the entire site */
+function getAllSiteImages(): string[] {
+  const urls = new Set<string>();
+
+  // Hero image
+  urls.add("/images/hero-bangles.png");
+
+  // Category images
+  for (const cat of categories) {
+    urls.add(cat.image);
+  }
+
+  // All product images (every variant)
+  for (const p of products) {
+    for (const img of p.images) {
+      urls.add(img);
+    }
+  }
+
+  // Testimonial avatars
+  for (const t of testimonials) {
+    urls.add(t.avatar);
+  }
+
+  // About page hero
+  urls.add(
+    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85"
+  );
+
+  // Homepage craftsmanship banner
+  urls.add(
+    "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?auto=format&fit=crop&w=1600&q=85"
+  );
+
+  // Instagram gallery
+  const instaUrls = [
+    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=600&q=80",
+  ];
+  for (const u of instaUrls) {
+    urls.add(u);
+  }
+
+  return Array.from(urls);
+}
+
+const ALL_IMAGES = getAllSiteImages();
 
 const LUXURY_PHRASES = [
   "Awakening Royal Heritage…",
@@ -70,29 +108,39 @@ export function LuxuryPreloader() {
     document.body.style.overflow = "hidden";
 
     const hasVisited = sessionStorage.getItem("rr_preloader_seen");
+    const totalImages = ALL_IMAGES.length;
     let loadedCount = 0;
-    const totalImages = CRITICAL_IMAGES.length;
-    let targetProgress = 0;
+    let allImagesLoaded = false;
     const startTime = Date.now();
     const minDuration = hasVisited ? 1500 : 2800;
 
-    const updateProgress = () => {
+    const checkComplete = () => {
+      if (allImagesLoaded) return;
       loadedCount++;
-      targetProgress = Math.round((loadedCount / totalImages) * 100);
+      if (loadedCount >= totalImages) {
+        allImagesLoaded = true;
+      }
     };
 
-    CRITICAL_IMAGES.forEach((src) => {
+    // Preload ALL images used on the site
+    ALL_IMAGES.forEach((src) => {
       const img = new Image();
       img.src = src;
-      img.onload = updateProgress;
-      img.onerror = updateProgress;
+      img.onload = checkComplete;
+      img.onerror = checkComplete; // count errors too so we don't hang
     });
 
+    // Smooth progress incrementer — driven by actual image load count
     const interval = setInterval(() => {
       setProgress((prev) => {
         const elapsed = Date.now() - startTime;
-        const timeProg = Math.min(100, Math.round((elapsed / minDuration) * 100));
-        const target = Math.max(timeProg, targetProgress);
+        // Image-based progress (the real metric)
+        const imageProg = Math.round((loadedCount / totalImages) * 100);
+        // Time-based floor (so it doesn't sit at 0 on fast loads)
+        const timeFloor = Math.min(90, Math.round((elapsed / minDuration) * 90));
+        // Use whichever is higher, but cap time-floor at 90 so
+        // the last 10% always waits for real image completion
+        const target = Math.max(imageProg, timeFloor);
 
         if (prev < target) {
           const step = Math.ceil((target - prev) / 6) || 1;
@@ -107,18 +155,22 @@ export function LuxuryPreloader() {
           return next;
         }
 
-        if (prev >= 100 && elapsed >= minDuration) {
+        // Only exit when ALL images are loaded AND min time passed
+        if (allImagesLoaded && elapsed >= minDuration && prev >= 100) {
           clearInterval(interval);
           setTimeout(triggerExit, 400);
         }
+
         return prev;
       });
     }, 30);
 
+    // Safety timeout — don't hang forever if images fail (max 8s)
     const safety = setTimeout(() => {
+      clearInterval(interval);
       setProgress(100);
       triggerExit();
-    }, 5000);
+    }, 8000);
 
     return () => {
       clearInterval(interval);
@@ -141,7 +193,7 @@ export function LuxuryPreloader() {
       )}
       style={{ height: "100dvh" }}
       role="status"
-      aria-label="Loading Radha Rani Bangles"
+      aria-label={`Loading Radha Rani Bangles — ${progress}%`}
       aria-live="polite"
     >
       {/* ═══════════════════════════════════
@@ -374,7 +426,14 @@ export function LuxuryPreloader() {
               style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
             />
             <defs>
-              <linearGradient id="bangleGold" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+              <linearGradient
+                id="bangleGold"
+                x1="0"
+                y1="0"
+                x2="100"
+                y2="100"
+                gradientUnits="userSpaceOnUse"
+              >
                 <stop offset="0%" stopColor="#F5EFE0" />
                 <stop offset="30%" stopColor="#D4A853" />
                 <stop offset="60%" stopColor="#A16207" />
@@ -477,8 +536,35 @@ export function LuxuryPreloader() {
             />
           </div>
 
+          {/* Image count indicator */}
+          <div className="flex items-center justify-between mt-2.5 sm:mt-3">
+            <span
+              className="font-body uppercase"
+              style={{
+                fontSize: "clamp(6px, 1.4vw, 9px)",
+                letterSpacing: "0.18em",
+                color: "rgba(255,255,255,0.25)",
+              }}
+            >
+              Loading {ALL_IMAGES.length} assets
+            </span>
+            <span
+              className="font-body tabular-nums"
+              style={{
+                fontSize: "clamp(6px, 1.4vw, 9px)",
+                color: "rgba(212,168,83,0.5)",
+              }}
+            >
+              {Math.round((progress / 100) * ALL_IMAGES.length)}/
+              {ALL_IMAGES.length}
+            </span>
+          </div>
+
           {/* Rotating phrase — smooth cross-fade */}
-          <div className="relative mt-3 sm:mt-4 overflow-hidden" style={{ height: "clamp(16px, 3vw, 22px)" }}>
+          <div
+            className="relative mt-3 sm:mt-4 overflow-hidden"
+            style={{ height: "clamp(16px, 3vw, 22px)" }}
+          >
             {LUXURY_PHRASES.map((phrase, i) => (
               <p
                 key={i}
