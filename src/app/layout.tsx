@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { LuxuryPreloader } from "@/components/LuxuryPreloader";
 
 export const metadata: Metadata = {
   title: "Radha Rani Bangles | Exquisite Indian Bangles & Jewelry",
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background text-foreground">
+        <LuxuryPreloader />
         <SmoothScroll>
           <Navbar />
           <main className="min-h-screen">{children}</main>
