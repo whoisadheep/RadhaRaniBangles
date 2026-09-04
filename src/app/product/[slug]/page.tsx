@@ -10,6 +10,7 @@ import { getProductWhatsAppUrl } from "@/lib/whatsapp";
 import { useWishlist } from "@/lib/wishlist";
 import { useQuickView } from "@/lib/quick-view";
 import { fetchProducts } from "@/lib/supabase/products";
+import { SizeGuideModal } from "@/components/SizeGuideModal";
 
 export default function ProductPage() {
   const params = useParams();
@@ -37,6 +38,7 @@ export default function ProductPage() {
 
   const [selectedSize, setSelectedSize] = useState("2.6");
   const [quantity, setQuantity] = useState(1);
+  const [showSizeModal, setShowSizeModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews">("description");
   const { isInWishlist, toggleWishlist } = useWishlist();
   const { openQuickView } = useQuickView();
@@ -237,12 +239,13 @@ export default function ProductPage() {
                   <p className="font-body text-xs uppercase tracking-[0.2em] font-semibold text-primary">
                     Select Size (inches)
                   </p>
-                  <Link
-                    href="/size-guide"
-                    className="font-body text-xs text-accent hover-underline cursor-pointer"
+                  <button
+                    type="button"
+                    onClick={() => setShowSizeModal(true)}
+                    className="font-body text-xs text-accent hover:underline cursor-pointer flex items-center gap-1 font-medium"
                   >
-                    Size Guide
-                  </Link>
+                    <span>📏</span> Find My Size
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   {sizes.map((size) => (
@@ -589,6 +592,14 @@ export default function ProductPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Interactive Bangle Size Guide Modal ── */}
+      <SizeGuideModal
+        isOpen={showSizeModal}
+        onClose={() => setShowSizeModal(false)}
+        onSelectSize={(size) => setSelectedSize(size)}
+        selectedSize={selectedSize}
+      />
     </>
   );
 }

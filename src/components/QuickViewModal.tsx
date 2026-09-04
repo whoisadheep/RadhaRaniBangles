@@ -6,6 +6,7 @@ import { useQuickView } from "@/lib/quick-view";
 import { useCart } from "@/lib/cart";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { getProductWhatsAppUrl } from "@/lib/whatsapp";
+import { SizeGuideModal } from "@/components/SizeGuideModal";
 
 const SIZES = ["2.2", "2.4", "2.6", "2.8", "2.10"];
 
@@ -17,6 +18,7 @@ export function QuickViewModal() {
   const [selectedSize, setSelectedSize] = useState<string>("2.6");
   const [quantity, setQuantity] = useState<number>(1);
   const [added, setAdded] = useState<boolean>(false);
+  const [showSizeModal, setShowSizeModal] = useState<boolean>(false);
 
   // Synchronize internal state whenever a new product is loaded
   useEffect(() => {
@@ -226,9 +228,18 @@ export function QuickViewModal() {
                   <span className="font-body text-xs uppercase tracking-wider font-semibold text-primary">
                     Bangle Size (inches)
                   </span>
-                  <span className="font-body text-[11px] text-accent">
-                    {selectedSize === "2.6" ? "Most popular size" : `Size ${selectedSize}`}
-                  </span>
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowSizeModal(true)}
+                      className="font-body text-[11px] text-accent hover:underline cursor-pointer flex items-center gap-1 font-medium"
+                    >
+                      <span>📏</span> Size Guide
+                    </button>
+                    <span className="font-body text-[11px] text-muted-foreground hidden sm:inline">
+                      • {selectedSize === "2.6" ? "Most popular" : `Size ${selectedSize}`}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   {SIZES.map((size) => (
@@ -334,6 +345,14 @@ export function QuickViewModal() {
           </div>
         </div>
       </div>
+
+      {/* ── Submodal Size Guide ── */}
+      <SizeGuideModal
+        isOpen={showSizeModal}
+        onClose={() => setShowSizeModal(false)}
+        onSelectSize={(size) => setSelectedSize(size)}
+        selectedSize={selectedSize}
+      />
     </div>
   );
 }
