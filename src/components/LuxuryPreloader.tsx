@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { products, categories, testimonials } from "@/lib/data";
 
@@ -90,6 +91,7 @@ const DUST_PARTICLES = Array.from({ length: 20 }, (_, i) => {
 });
 
 export function LuxuryPreloader() {
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
@@ -105,6 +107,7 @@ export function LuxuryPreloader() {
   }, []);
 
   useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
     document.body.style.overflow = "hidden";
 
     const hasVisited = sessionStorage.getItem("rr_preloader_seen");
@@ -179,7 +182,7 @@ export function LuxuryPreloader() {
     };
   }, [triggerExit]);
 
-  if (!loading) return null;
+  if (pathname.startsWith("/admin") || !loading) return null;
 
   /* The SVG bangle circumference — used for stroke-dash draw effect */
   const BANGLE_R = 44;
