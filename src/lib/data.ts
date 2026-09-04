@@ -15,6 +15,10 @@ export interface Product {
   material: string;
   weight?: string;
   size?: string;
+  hallmark?: string;
+  careInstructions?: string[];
+  craftsmanshipDetails?: string;
+  boxContents?: string;
 }
 
 export interface Category {

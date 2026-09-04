@@ -323,10 +323,8 @@ export default function ProductPage() {
                 <div className="font-body text-sm text-secondary leading-relaxed space-y-4 animate-fade-in-up">
                   <p>{product.description}</p>
                   <p>
-                    Each piece is meticulously handcrafted by skilled artisans who have inherited
-                    generations of craftsmanship. The attention to detail in every curve, pattern,
-                    and finish reflects our commitment to preserving Indian jewelry traditions
-                    while embracing contemporary aesthetics.
+                    {product.craftsmanshipDetails ||
+                      "Each piece is meticulously handcrafted by skilled artisans who have inherited generations of craftsmanship. The attention to detail in every curve, pattern, and finish reflects our commitment to preserving Indian jewelry traditions while embracing contemporary aesthetics."}
                   </p>
                 </div>
               )}
@@ -338,7 +336,8 @@ export default function ProductPage() {
                       { term: "Material", def: product.material },
                       { term: "Weight", def: product.weight || "Contact for details" },
                       { term: "Size", def: product.size || "Available in multiple sizes" },
-                      { term: "Hallmark", def: "BIS Certified (where applicable)" },
+                      { term: "Hallmark", def: product.hallmark || "BIS Certified (where applicable)" },
+                      ...(product.boxContents ? [{ term: "Package", def: product.boxContents }] : []),
                     ].map((item) => (
                       <div key={item.term} className="flex gap-4 py-2 border-b border-border/50">
                         <dt className="font-body text-sm font-semibold text-primary w-32 shrink-0">
@@ -351,10 +350,17 @@ export default function ProductPage() {
                   <div className="mt-6">
                     <h4 className="font-body text-sm font-semibold text-primary mb-2">Care Instructions</h4>
                     <ul className="font-body text-sm text-secondary space-y-1.5 list-disc list-inside">
-                      <li>Store in a cool, dry place away from moisture</li>
-                      <li>Avoid contact with perfume, chemicals, and water</li>
-                      <li>Clean gently with a soft dry cloth</li>
-                      <li>Store separately to prevent scratches</li>
+                      {(product.careInstructions && product.careInstructions.length > 0
+                        ? product.careInstructions
+                        : [
+                            "Store in a cool, dry place away from moisture",
+                            "Avoid contact with perfume, chemicals, and water",
+                            "Clean gently with a soft dry cloth",
+                            "Store separately to prevent scratches",
+                          ]
+                      ).map((instruction, idx) => (
+                        <li key={idx}>{instruction}</li>
+                      ))}
                     </ul>
                   </div>
                 </div>
