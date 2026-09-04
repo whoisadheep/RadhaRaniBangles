@@ -66,7 +66,9 @@ function ProductCard({ product }: { product: typeof products[number] }) {
           }}
           className={cn(
             "absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass flex items-center justify-center transition-all duration-300 cursor-pointer hover:scale-110 shadow-sm",
-            isWished ? "opacity-100 bg-white shadow-md text-accent" : "opacity-0 group-hover:opacity-100"
+            isWished
+              ? "opacity-100 bg-white shadow-md text-accent"
+              : "opacity-85 sm:opacity-0 sm:group-hover:opacity-100 bg-white/80"
           )}
           aria-label={isWished ? "Remove from wishlist" : "Add to wishlist"}
         >
@@ -82,15 +84,15 @@ function ProductCard({ product }: { product: typeof products[number] }) {
           </svg>
         </button>
 
-        {/* Quick Add */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out z-10">
+        {/* Quick Add (Desktop Hover) */}
+        <div className="hidden sm:block absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out z-10">
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleAddToCart();
             }}
-            className="w-full bg-primary/95 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer shadow-lg"
+            className="w-full bg-primary/95 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-xl hover:bg-accent transition-colors duration-300 cursor-pointer shadow-lg active:scale-95"
             aria-live="polite"
           >
             {added ? "Added ✓" : "Add to Cart"}
@@ -138,6 +140,31 @@ function ProductCard({ product }: { product: typeof products[number] }) {
           </span>
         </div>
       </Link>
+
+      {/* Mobile Add to Cart Button (Always visible on mobile) */}
+      <div className="sm:hidden mt-3">
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleAddToCart();
+          }}
+          className={cn(
+            "w-full font-body text-xs uppercase tracking-wider py-2.5 px-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95",
+            added
+              ? "bg-emerald-700 text-white"
+              : "bg-accent hover:bg-accent-dark text-on-accent"
+          )}
+          aria-live="polite"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+          </svg>
+          {added ? "Added to Bag ✓" : "Add to Cart"}
+        </button>
+      </div>
     </div>
   );
 }
