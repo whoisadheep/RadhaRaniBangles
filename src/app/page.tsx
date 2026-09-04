@@ -26,16 +26,18 @@ function ProductCard({ product }: { product: typeof products[number] }) {
     <div className="group relative animate-fade-in-up">
       {/* Image */}
       <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-champagne mb-4 img-zoom border border-border/40 shadow-sm group-hover:shadow-md transition-shadow duration-500">
-        {/* Product Image */}
-        <img
-          src={product.images[0]}
-          alt={product.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+        {/* Product Image Link */}
+        <Link href={`/product/${product.slug}`} className="block w-full h-full cursor-pointer">
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </Link>
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
           {product.isNew && (
             <span className="bg-primary text-on-primary font-body text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
               New
@@ -55,7 +57,11 @@ function ProductCard({ product }: { product: typeof products[number] }) {
 
         {/* Wishlist */}
         <button
-          onClick={() => setIsWished(!isWished)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsWished(!isWished);
+          }}
           className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:scale-110 shadow-sm"
           aria-label={isWished ? "Remove from wishlist" : "Add to wishlist"}
         >
@@ -72,8 +78,16 @@ function ProductCard({ product }: { product: typeof products[number] }) {
         </button>
 
         {/* Quick Add */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out">
-          <button onClick={handleAddToCart} className="w-full bg-primary/95 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer shadow-lg" aria-live="polite">
+        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out z-10">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAddToCart();
+            }}
+            className="w-full bg-primary/95 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer shadow-lg"
+            aria-live="polite"
+          >
             {added ? "Added ✓" : "Add to Cart"}
           </button>
         </div>

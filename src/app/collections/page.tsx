@@ -20,7 +20,14 @@ export default function CollectionsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
+  const [addedProductId, setAddedProductId] = useState<string | null>(null);
   const { addItem } = useCart();
+
+  const handleAddToCart = (product: Product) => {
+    addItem(product);
+    setAddedProductId(product.id);
+    window.setTimeout(() => setAddedProductId(null), 1800);
+  };
 
   useEffect(() => {
     async function loadLiveProducts() {
@@ -251,15 +258,18 @@ export default function CollectionsPage() {
                   <div key={product.id} className="group relative animate-fade-in-up">
                     {/* Image */}
                     <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-champagne mb-4 img-zoom border border-border/40">
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                      {/* Product Image Link */}
+                      <Link href={`/product/${product.slug}`} className="block w-full h-full cursor-pointer">
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </Link>
 
                       {/* Badges */}
-                      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+                      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
                         {product.isNew && (
                           <span className="bg-primary text-on-primary font-body text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">
                             New
@@ -279,6 +289,10 @@ export default function CollectionsPage() {
 
                       {/* Wishlist */}
                       <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:scale-110"
                         aria-label="Add to wishlist"
                       >
@@ -288,9 +302,17 @@ export default function CollectionsPage() {
                       </button>
 
                       {/* Quick Add */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out">
-                        <button onClick={() => addItem(product)} className="w-full bg-primary/90 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer">
-                          Add to Cart
+                      <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out z-10">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
+                          className="w-full bg-primary/90 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer"
+                          aria-live="polite"
+                        >
+                          {addedProductId === product.id ? "Added ✓" : "Add to Cart"}
                         </button>
                       </div>
                     </div>
