@@ -13,6 +13,37 @@ export interface Order {
   trackingId?: string;
 }
 
+export interface CreateOrderInput {
+  customer: string;
+  email: string;
+  phone: string;
+  address: string;
+  items: { name: string; quantity: number; price: number; size?: string }[];
+  total: number;
+}
+
+export async function createOrder(input: CreateOrderInput): Promise<string> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    throw new Error("Ordering is not configured yet. Please add your Supabase environment variables.");
+  }
+
+  const id = `RR-${Date.now().toString().slice(-8)}`;
+  const { error } = await supabase.from("orders").insert({
+    id,
+    customer: input.customer,
+    email: input.email,
+    phone: input.phone,
+    address: input.address,
+    items: input.items,
+    total: input.total,
+    status: "pending",
+  });
+
+  if (error) throw new Error(error.message);
+  return id;
+}
+
 export const initialOrders: Order[] = [
   {
     id: "RR-8925",

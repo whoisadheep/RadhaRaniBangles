@@ -1,34 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { products } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
-
-interface CartItem {
-  product: (typeof products)[number];
-  quantity: number;
-  size: string;
-}
+import { useCart } from "@/lib/cart";
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    { product: products[0], quantity: 1, size: "2.6" },
-    { product: products[4], quantity: 2, size: "2.4" },
-  ]);
+  const { items: cartItems, updateQuantity, removeItem } = useCart();
 
   const updateQty = (index: number, delta: number) => {
-    setCartItems((prev) =>
-      prev
-        .map((item, i) =>
-          i === index ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
-        )
-        .filter((item) => item.quantity > 0)
-    );
-  };
-
-  const removeItem = (index: number) => {
-    setCartItems((prev) => prev.filter((_, i) => i !== index));
+    const item = cartItems[index];
+    if (item) updateQuantity(index, item.quantity + delta);
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
@@ -261,12 +242,12 @@ export default function CartPage() {
                   </div>
 
                   {/* Checkout */}
-                  <button className="w-full mt-6 bg-accent hover:bg-accent-dark text-on-accent font-body text-sm uppercase tracking-widest py-4 rounded-full transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(161,98,7,0.25)] flex items-center justify-center gap-2">
+                  <Link href="/checkout" className="w-full mt-6 bg-accent hover:bg-accent-dark text-on-accent font-body text-sm uppercase tracking-widest py-4 rounded-full transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(161,98,7,0.25)] flex items-center justify-center gap-2">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
                     Proceed to Checkout
-                  </button>
+                  </Link>
 
                   {/* Trust */}
                   <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-center gap-4">

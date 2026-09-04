@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/lib/cart";
 
 export function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { itemCount } = useCart();
 
   useEffect(() => {
     if (pathname.startsWith("/admin")) return;
@@ -157,7 +159,7 @@ export function Navbar() {
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
                 <span className="absolute -top-0.5 -right-0.5 bg-accent text-on-accent text-[9px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
-                  0
+                  {itemCount}
                 </span>
               </Link>
 

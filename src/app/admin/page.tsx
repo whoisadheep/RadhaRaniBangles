@@ -1,9 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { products, categories } from "@/lib/data";
+import { products, categories, Product } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
+import { fetchProducts } from "@/lib/supabase/products";
+import { fetchOrders } from "@/lib/supabase/orders";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /* ═══════════════════════════════════════════════════
    Mock Data — Recent Orders
@@ -83,7 +87,33 @@ const STATUS_CONFIG: Record<
 };
 
 export default function AdminDashboardPage() {
-  const topProducts = products.slice(0, 4);
+  const [productList, setProductList] = useState<Product[]>(products);
+  const [orderList, setOrderList] = useState<any[]>(RECENT_ORDERS);
+  const supabaseActive = isSupabaseConfigured();
+
+  useEffect(() => {
+    async function loadDashboard() {
+      try {
+        const [liveProducts, liveOrders] = await Promise.all([
+          fetchProducts(),
+          fetchOrders(),
+        ]);
+        if (liveProducts && liveProducts.length > 0) {
+          setProductList(liveProducts);
+        }
+        if (liveOrders && liveOrders.length > 0) {
+          setOrderList(liveOrders);
+        }
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      }
+    }
+    loadDashboard();
+  }, []);
+
+  const topProducts = productList.slice(0, 4);
+  const totalRevenue = orderList.reduce((sum, o) => sum + (Number(o.total || o.amount) || 0), 0) || 2485000;
+  const totalOrdersCount = orderList.length || 156;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-8">
@@ -98,10 +128,17 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-xs font-body text-white/60">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Store Active
-          </div>
+          {supabaseActive ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-body text-emerald-400 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Live Supabase
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-xs font-body text-white/60">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              Offline Mode
+            </div>
+          )}
           <Link
             href="/admin/products"
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#A16207] hover:bg-[#7C4D05] text-white text-xs font-body font-medium transition-colors cursor-pointer shadow-sm"
@@ -164,7 +201,7 @@ export default function AdminDashboardPage() {
           </div>
           <div>
             <p className="font-heading text-2xl font-bold text-white">
-              ₹24,85,000
+              {formatPrice(totalRevenue)}
             </p>
             <p className="font-body text-xs text-white/40 uppercase tracking-wider mt-1">
               Total Revenue
@@ -208,7 +245,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <div>
-            <p className="font-heading text-2xl font-bold text-white">156</p>
+            <p className="font-heading text-2xl font-bold text-white">{totalOrdersCount}</p>
             <p className="font-body text-xs text-white/40 uppercase tracking-wider mt-1">
               Total Orders
             </p>
@@ -240,7 +277,7 @@ export default function AdminDashboardPage() {
           </div>
           <div>
             <p className="font-heading text-2xl font-bold text-white">
-              {products.length}
+              {productList.length}
             </p>
             <p className="font-body text-xs text-white/40 uppercase tracking-wider mt-1">
               Active Products

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { products, categories } from "@/lib/data";
+import { products as fallbackProducts, categories, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
+import { useCart } from "@/lib/cart";
+import { fetchProducts } from "@/lib/supabase/products";
 
 const sortOptions = [
   { label: "Featured", value: "featured" },
@@ -14,11 +16,27 @@ const sortOptions = [
 ];
 
 export default function CollectionsPage() {
+  const [productList, setProductList] = useState<Product[]>(fallbackProducts);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
+  const { addItem } = useCart();
 
-  const filtered = products
+  useEffect(() => {
+    async function loadLiveProducts() {
+      try {
+        const live = await fetchProducts();
+        if (live && live.length > 0) {
+          setProductList(live);
+        }
+      } catch (err) {
+        console.error("Collections fetchProducts error:", err);
+      }
+    }
+    loadLiveProducts();
+  }, []);
+
+  const filtered = productList
     .filter(
       (p) => selectedCategory === "all" || p.categorySlug === selectedCategory
     )
@@ -84,7 +102,7 @@ export default function CollectionsPage() {
                     >
                       All Collections
                       <span className="float-right text-xs text-muted-foreground">
-                        {products.length}
+                        {productList.length}
                       </span>
                     </button>
                   </li>
@@ -271,7 +289,7 @@ export default function CollectionsPage() {
 
                       {/* Quick Add */}
                       <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out">
-                        <button className="w-full bg-primary/90 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer">
+                        <button onClick={() => addItem(product)} className="w-full bg-primary/90 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer">
                           Add to Cart
                         </button>
                       </div>

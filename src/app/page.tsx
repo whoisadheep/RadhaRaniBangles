@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { products, categories, testimonials } from "@/lib/data";
+import { products, categories, testimonials, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
+import { useCart } from "@/lib/cart";
+import { fetchProducts } from "@/lib/supabase/products";
 
 /* ═══════════════════════════════════════════════
    Product Card
@@ -11,6 +13,14 @@ import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 
 function ProductCard({ product }: { product: typeof products[number] }) {
   const [isWished, setIsWished] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
+
+  const handleAddToCart = () => {
+    addItem(product);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1800);
+  };
 
   return (
     <div className="group relative animate-fade-in-up">
@@ -63,8 +73,8 @@ function ProductCard({ product }: { product: typeof products[number] }) {
 
         {/* Quick Add */}
         <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out">
-          <button className="w-full bg-primary/95 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer shadow-lg">
-            Add to Cart
+          <button onClick={handleAddToCart} className="w-full bg-primary/95 backdrop-blur-md text-on-primary font-body text-xs uppercase tracking-widest py-3 rounded-lg hover:bg-accent transition-colors duration-300 cursor-pointer shadow-lg" aria-live="polite">
+            {added ? "Added ✓" : "Add to Cart"}
           </button>
         </div>
       </div>
@@ -118,14 +128,29 @@ function ProductCard({ product }: { product: typeof products[number] }) {
    ═══════════════════════════════════════════════ */
 
 export default function HomePage() {
+  const [productList, setProductList] = useState<Product[]>(products);
   const [activeTab, setActiveTab] = useState<"all" | "bestseller" | "new">("all");
+
+  useEffect(() => {
+    async function loadLiveProducts() {
+      try {
+        const live = await fetchProducts();
+        if (live && live.length > 0) {
+          setProductList(live);
+        }
+      } catch (err) {
+        console.error("Homepage fetchProducts error:", err);
+      }
+    }
+    loadLiveProducts();
+  }, []);
 
   const filteredProducts =
     activeTab === "all"
-      ? products.slice(0, 8)
+      ? productList.slice(0, 8)
       : activeTab === "bestseller"
-        ? products.filter((p) => p.isBestseller).slice(0, 8)
-        : products.filter((p) => p.isNew).slice(0, 8);
+        ? productList.filter((p) => p.isBestseller).slice(0, 8)
+        : productList.filter((p) => p.isNew).slice(0, 8);
 
   const instagramImages = [
     { id: 1, src: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80", tag: "@radharanibangles" },

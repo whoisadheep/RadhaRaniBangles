@@ -1,21 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { products } from "@/lib/data";
+import { products as fallbackProducts, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
+import { useCart } from "@/lib/cart";
+import { fetchProducts } from "@/lib/supabase/products";
 
 export default function ProductPage() {
   const params = useParams();
   const slug = params.slug as string;
-  const product = products.find((p) => p.slug === slug);
+  const [productList, setProductList] = useState<Product[]>(fallbackProducts);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadLiveProduct() {
+      try {
+        const live = await fetchProducts();
+        if (live && live.length > 0) {
+          setProductList(live);
+        }
+      } catch (err) {
+        console.error("Product fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadLiveProduct();
+  }, [slug]);
+
+  const product = productList.find((p) => p.slug === slug);
 
   const [selectedSize, setSelectedSize] = useState("2.6");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews">("description");
   const [isWished, setIsWished] = useState(false);
   const [activeImage, setActiveImage] = useState(product?.images[0] || "");
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
+
+  // Sync activeImage once product loads
+  useEffect(() => {
+    if (product?.images?.[0]) {
+      setActiveImage(product.images[0]);
+    }
+  }, [product]);
+
+  if (!product && loading) {
+    return (
+      <section className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#A16207] border-t-transparent rounded-full animate-spin" />
+      </section>
+    );
+  }
 
   if (!product) {
     return (
@@ -36,7 +74,7 @@ export default function ProductPage() {
     );
   }
 
-  const relatedProducts = products
+  const relatedProducts = productList
     .filter((p) => p.categorySlug === product.categorySlug && p.id !== product.id)
     .slice(0, 4);
 
@@ -236,11 +274,14 @@ export default function ProductPage() {
 
               {/* Add to Cart + Wishlist */}
               <div className="flex gap-3 mt-8">
-                <button className="flex-1 bg-accent hover:bg-accent-dark text-on-accent font-body text-sm uppercase tracking-widest py-4 rounded-full transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(161,98,7,0.25)] flex items-center justify-center gap-3">
+                <button
+                  onClick={() => { addItem(product, selectedSize, quantity); setAdded(true); }}
+                  className="flex-1 bg-accent hover:bg-accent-dark text-on-accent font-body text-sm uppercase tracking-widest py-4 rounded-full transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(161,98,7,0.25)] flex items-center justify-center gap-3"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" />
                   </svg>
-                  Add to Cart
+                  {added ? "Added to Cart" : "Add to Cart"}
                 </button>
                 <button
                   onClick={() => setIsWished(!isWished)}

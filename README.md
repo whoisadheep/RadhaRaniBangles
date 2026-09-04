@@ -14,6 +14,7 @@ A luxury Indian bangles & jewelry e-commerce website built with **Next.js 15 App
 - **Full Catalog & Multi-Faceted Filters (`/collections`)**: Filter by category, price tier, and metal materials.
 - **Interactive Product Details (`/product/[slug]`)**: Multi-angle image selector, size selector (2.2" - 2.10"), quantity modifier, tabbed specifications, and recommendations.
 - **Real-Time Shopping Bag (`/cart`)**: Dynamic quantity adjustments, coupon application, and free-shipping progress indicator.
+- **Checkout & Order Capture (`/checkout`)**: Customer delivery form that creates a pending order in Supabase for the admin order dashboard.
 - **Brand Story (`/about`) & Store Locator (`/contact`)**: Artisanal mission storytelling and validated contact inquiry form.
 - **Modular Data Architecture (`src/lib/data.ts`)**: Structured TypeScript models ready to connect to any backend or Admin Panel.
 
@@ -84,6 +85,17 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 npm run build
 npm run start
 ```
+
+### 4. Enable live order capture
+
+Run [`supabase/schema.sql`](supabase/schema.sql) in your Supabase SQL editor, then create a `.env.local` file with:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Without these variables, customers can browse and add items to a local cart, but checkout will not submit an order. The current checkout records an order request; payment and delivery can then be confirmed by your team from the admin dashboard.
 
 ---
 
