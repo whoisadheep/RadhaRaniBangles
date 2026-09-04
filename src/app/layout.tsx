@@ -5,7 +5,6 @@ import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { LuxuryPreloader } from "@/components/LuxuryPreloader";
 import { CartProvider } from "@/lib/cart";
-import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { WishlistProvider } from "@/lib/wishlist";
 import { CartDrawer } from "@/components/CartDrawer";
 
@@ -39,7 +38,6 @@ export default function RootLayout({
               <Navbar />
               <main className="min-h-screen w-full max-w-full overflow-x-hidden">{children}</main>
             <Footer />
-            <WhatsAppButton />
             </SmoothScroll>
             <CartDrawer />
           </WishlistProvider>
