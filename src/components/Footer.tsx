@@ -102,6 +102,7 @@ export function Footer() {
             <ul className="space-y-3">
               {[
                 { label: "Contact Us", href: "/contact" },
+                { label: "Track Your Order", href: "/track-order" },
                 { label: "Shipping & Returns", href: "/shipping" },
                 { label: "Size Guide", href: "/size-guide" },
                 { label: "Care Instructions", href: "/care" },

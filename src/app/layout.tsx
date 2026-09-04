@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { LuxuryPreloader } from "@/components/LuxuryPreloader";
 import { CartProvider } from "@/lib/cart";
+import { WishlistProvider } from "@/lib/wishlist";
 
 export const metadata: Metadata = {
   title: "Radha Rani Bangles | Exquisite Indian Bangles & Jewelry",
@@ -30,12 +31,14 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-background text-foreground w-full max-w-full overflow-x-hidden">
         <CartProvider>
-          <LuxuryPreloader />
-          <SmoothScroll>
-            <Navbar />
-            <main className="min-h-screen w-full max-w-full overflow-x-hidden">{children}</main>
-            <Footer />
-          </SmoothScroll>
+          <WishlistProvider>
+            <LuxuryPreloader />
+            <SmoothScroll>
+              <Navbar />
+              <main className="min-h-screen w-full max-w-full overflow-x-hidden">{children}</main>
+              <Footer />
+            </SmoothScroll>
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>

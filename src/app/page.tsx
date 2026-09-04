@@ -5,6 +5,7 @@ import Link from "next/link";
 import { products, categories, testimonials, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { fetchProducts } from "@/lib/supabase/products";
 
 /* ═══════════════════════════════════════════════
@@ -12,7 +13,8 @@ import { fetchProducts } from "@/lib/supabase/products";
    ═══════════════════════════════════════════════ */
 
 function ProductCard({ product }: { product: typeof products[number] }) {
-  const [isWished, setIsWished] = useState(false);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const isWished = isInWishlist(product.id);
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
 
@@ -60,9 +62,12 @@ function ProductCard({ product }: { product: typeof products[number] }) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setIsWished(!isWished);
+            toggleWishlist(product);
           }}
-          className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:scale-110 shadow-sm"
+          className={cn(
+            "absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass flex items-center justify-center transition-all duration-300 cursor-pointer hover:scale-110 shadow-sm",
+            isWished ? "opacity-100 bg-white shadow-md text-accent" : "opacity-0 group-hover:opacity-100"
+          )}
           aria-label={isWished ? "Remove from wishlist" : "Add to wishlist"}
         >
           <svg

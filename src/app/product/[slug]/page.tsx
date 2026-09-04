@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { products as fallbackProducts, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { fetchProducts } from "@/lib/supabase/products";
 
 export default function ProductPage() {
@@ -35,7 +36,8 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState("2.6");
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews">("description");
-  const [isWished, setIsWished] = useState(false);
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const isWished = product ? isInWishlist(product.id) : false;
   const [activeImage, setActiveImage] = useState(product?.images[0] || "");
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
@@ -284,11 +286,11 @@ export default function ProductPage() {
                   {added ? "Added to Cart" : "Add to Cart"}
                 </button>
                 <button
-                  onClick={() => setIsWished(!isWished)}
+                  onClick={() => product && toggleWishlist(product)}
                   className={cn(
                     "w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-300 cursor-pointer",
                     isWished
-                      ? "border-accent bg-accent/10 text-accent"
+                      ? "border-accent bg-accent/10 text-accent shadow-sm"
                       : "border-border text-secondary hover:border-accent hover:text-accent"
                   )}
                   aria-label={isWished ? "Remove from wishlist" : "Add to wishlist"}

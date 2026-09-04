@@ -5,6 +5,7 @@ import Link from "next/link";
 import { products as fallbackProducts, categories, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { fetchProducts } from "@/lib/supabase/products";
 
 const sortOptions = [
@@ -22,6 +23,7 @@ export default function CollectionsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [addedProductId, setAddedProductId] = useState<string | null>(null);
   const { addItem } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
@@ -292,11 +294,22 @@ export default function CollectionsPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          toggleWishlist(product);
                         }}
-                        className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer hover:scale-110"
-                        aria-label="Add to wishlist"
+                        className={cn(
+                          "absolute top-3 right-3 z-10 w-9 h-9 rounded-full glass flex items-center justify-center transition-all duration-300 cursor-pointer hover:scale-110 shadow-sm",
+                          isInWishlist(product.id) ? "opacity-100 bg-white shadow-md text-accent" : "opacity-0 group-hover:opacity-100"
+                        )}
+                        aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill={isInWishlist(product.id) ? "#A16207" : "none"}
+                          stroke={isInWishlist(product.id) ? "#A16207" : "currentColor"}
+                          strokeWidth="1.5"
+                        >
                           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                         </svg>
                       </button>

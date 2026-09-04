@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -12,6 +13,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { itemCount } = useCart();
+  const { wishlistCount } = useWishlist();
 
   useEffect(() => {
     if (pathname.startsWith("/admin")) return;
@@ -139,12 +141,23 @@ export function Navbar() {
                 className="relative cursor-pointer p-1.5 hover:text-accent transition-colors duration-300 hidden sm:block"
                 aria-label="Wishlist"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill={wishlistCount > 0 ? "#A16207" : "none"}
+                  stroke={wishlistCount > 0 ? "#A16207" : "currentColor"}
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
-                <span className="absolute -top-0.5 -right-0.5 bg-accent text-on-accent text-[9px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
-                  0
-                </span>
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-accent text-on-accent text-[9px] font-semibold w-4 h-4 rounded-full flex items-center justify-center animate-fade-in">
+                    {wishlistCount}
+                  </span>
+                )}
               </Link>
 
               {/* Cart */}
@@ -287,8 +300,19 @@ export function Navbar() {
                   className="flex items-center gap-2 text-xs font-body uppercase tracking-wider text-secondary hover:text-accent transition-colors cursor-pointer"
                   onClick={() => setMobileOpen(false)}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                  Wishlist
+                  <div className="relative">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill={wishlistCount > 0 ? "#A16207" : "none"}
+                      stroke={wishlistCount > 0 ? "#A16207" : "currentColor"}
+                      strokeWidth="1.5"
+                    >
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                  </div>
+                  Wishlist {wishlistCount > 0 && <span className="bg-accent text-on-accent text-[10px] px-1.5 py-0.5 rounded-full font-semibold leading-none">{wishlistCount}</span>}
                 </Link>
                 <Link
                   href="/account"
