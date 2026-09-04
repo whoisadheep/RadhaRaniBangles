@@ -8,6 +8,7 @@ import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
 import { getProductWhatsAppUrl } from "@/lib/whatsapp";
 import { useWishlist } from "@/lib/wishlist";
+import { useQuickView } from "@/lib/quick-view";
 import { fetchProducts } from "@/lib/supabase/products";
 
 export default function ProductPage() {
@@ -38,6 +39,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews">("description");
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { openQuickView } = useQuickView();
   const isWished = product ? isInWishlist(product.id) : false;
   const [activeImage, setActiveImage] = useState(product?.images[0] || "");
   const [added, setAdded] = useState(false);
@@ -467,21 +469,61 @@ export default function ProductPage() {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                 {relatedProducts.map((rp) => (
-                  <Link key={rp.id} href={`/product/${rp.slug}`} className="group cursor-pointer animate-fade-in-up">
-                    <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-champagne mb-3 img-zoom border border-border/40 shadow-xs">
-                      <img
-                        src={rp.images[0]}
-                        alt={rp.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
+                  <div key={rp.id} className="group relative animate-fade-in-up">
+                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-champagne mb-3 img-zoom border border-border/40 shadow-xs">
+                      <Link href={`/product/${rp.slug}`} className="block w-full h-full cursor-pointer">
+                        <img
+                          src={rp.images[0]}
+                          alt={rp.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </Link>
+
+                      {/* Quick View Button on Desktop Hover */}
+                      <div className="hidden sm:flex absolute inset-0 items-center justify-center pointer-events-none">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openQuickView(rp);
+                          }}
+                          className="pointer-events-auto opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 bg-white/95 hover:bg-white text-primary hover:text-accent font-body text-xs font-semibold uppercase tracking-wider py-2 px-4 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1.5 cursor-pointer border border-white/60 hover:scale-105"
+                          aria-label={`Quick view ${rp.name}`}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Quick View
+                        </button>
+                      </div>
                     </div>
-                    <p className="font-body text-[11px] uppercase tracking-widest text-muted-foreground">{rp.category}</p>
-                    <h3 className="font-heading text-base font-semibold text-primary group-hover:text-accent transition-colors mt-0.5">
-                      {rp.name}
-                    </h3>
-                    <p className="font-body text-sm font-semibold text-primary mt-1">{formatPrice(rp.price)}</p>
-                  </Link>
+                    <Link href={`/product/${rp.slug}`} className="block cursor-pointer">
+                      <p className="font-body text-[11px] uppercase tracking-widest text-muted-foreground">{rp.category}</p>
+                      <h3 className="font-heading text-base font-semibold text-primary group-hover:text-accent transition-colors mt-0.5">
+                        {rp.name}
+                      </h3>
+                      <p className="font-body text-sm font-semibold text-primary mt-1">{formatPrice(rp.price)}</p>
+                    </Link>
+                    {/* Mobile Quick View */}
+                    <div className="sm:hidden mt-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openQuickView(rp);
+                        }}
+                        className="w-full py-2 px-3 rounded-lg border border-border bg-white text-secondary hover:text-accent text-xs font-body font-medium flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-colors"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        Quick Preview
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

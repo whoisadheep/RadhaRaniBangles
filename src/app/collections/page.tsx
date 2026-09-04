@@ -6,6 +6,7 @@ import { products as fallbackProducts, categories, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
+import { useQuickView } from "@/lib/quick-view";
 import { fetchProducts } from "@/lib/supabase/products";
 
 const sortOptions = [
@@ -24,6 +25,7 @@ export default function CollectionsPage() {
   const [addedProductId, setAddedProductId] = useState<string | null>(null);
   const { addItem } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const { openQuickView } = useQuickView();
 
   const handleAddToCart = (product: Product) => {
     addItem(product);
@@ -316,6 +318,25 @@ export default function CollectionsPage() {
                         </svg>
                       </button>
 
+                      {/* Quick View Button (Desktop Hover Center) */}
+                      <div className="hidden sm:flex absolute inset-0 items-center justify-center pointer-events-none">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openQuickView(product);
+                          }}
+                          className="pointer-events-auto opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 bg-white/95 hover:bg-white text-primary hover:text-accent font-body text-xs font-semibold uppercase tracking-wider py-2.5 px-5 rounded-full shadow-xl backdrop-blur-md flex items-center gap-2 cursor-pointer border border-white/60 hover:scale-105"
+                          aria-label={`Quick view ${product.name}`}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                          Quick View
+                        </button>
+                      </div>
+
                       {/* Quick Add (Desktop Hover) */}
                       <div className="hidden sm:block absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out z-10">
                         <button
@@ -372,8 +393,24 @@ export default function CollectionsPage() {
                       </div>
                     </Link>
 
-                    {/* Mobile Add to Cart Button (Always visible on mobile) */}
-                    <div className="sm:hidden mt-3">
+                    {/* Mobile Action Bar (Always visible on mobile) */}
+                    <div className="sm:hidden mt-3 flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openQuickView(product);
+                        }}
+                        className="w-10 h-10 rounded-xl border border-border bg-white text-secondary hover:text-accent hover:border-accent/40 flex items-center justify-center flex-shrink-0 cursor-pointer shadow-xs active:scale-95 transition-colors"
+                        aria-label={`Quick view ${product.name}`}
+                        title="Quick preview & size select"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
+
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -381,7 +418,7 @@ export default function CollectionsPage() {
                           handleAddToCart(product);
                         }}
                         className={cn(
-                          "w-full font-body text-xs uppercase tracking-wider py-2.5 px-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95",
+                          "flex-1 font-body text-xs uppercase tracking-wider py-2.5 px-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-95",
                           addedProductId === product.id
                             ? "bg-emerald-700 text-white"
                             : "bg-accent hover:bg-accent-dark text-on-accent"

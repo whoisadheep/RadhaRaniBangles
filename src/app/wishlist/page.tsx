@@ -4,12 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useWishlist } from "@/lib/wishlist";
 import { useCart } from "@/lib/cart";
+import { useQuickView } from "@/lib/quick-view";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import type { Product } from "@/lib/data";
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, clearWishlist } = useWishlist();
   const { addItem } = useCart();
+  const { openQuickView } = useQuickView();
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
   const [allAdded, setAllAdded] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -214,6 +216,25 @@ export default function WishlistPage() {
                               -{getDiscountPercentage(product.originalPrice, product.price)}%
                             </span>
                           )}
+                        </div>
+
+                        {/* Quick View Button (Desktop Hover Center) */}
+                        <div className="hidden sm:flex absolute inset-0 items-center justify-center pointer-events-none">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openQuickView(product);
+                            }}
+                            className="pointer-events-auto opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 bg-white/95 hover:bg-white text-primary hover:text-accent font-body text-xs font-semibold uppercase tracking-wider py-2 px-4 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1.5 cursor-pointer border border-white/60 hover:scale-105"
+                            aria-label={`Quick view ${product.name}`}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Quick View
+                          </button>
                         </div>
 
                         {/* Remove from Wishlist Button */}
