@@ -64,7 +64,7 @@ export default function ContactPage() {
                       </svg>
                     ),
                     title: "Phone",
-                    content: "+91 98765 43210\n+91 22 2345 6789",
+                    content: "+91 95196 88760\n+91 22 2345 6789",
                   },
                   {
                     icon: (
