@@ -25,48 +25,7 @@ interface RecentOrder {
   date: string;
 }
 
-const RECENT_ORDERS: RecentOrder[] = [
-  {
-    id: "#RR-8925",
-    customer: { name: "Pooja Sharma", city: "Mumbai, MH" },
-    item: "Ananya Gold Kada (2.6″)",
-    amount: 45999,
-    status: "Delivered",
-    date: "Today, 10:42 AM",
-  },
-  {
-    id: "#RR-8924",
-    customer: { name: "Aarav Patel", city: "Ahmedabad, GJ" },
-    item: "Meera Diamond Bangle (Set of 2)",
-    amount: 89999,
-    status: "Shipped",
-    date: "Today, 08:15 AM",
-  },
-  {
-    id: "#RR-8923",
-    customer: { name: "Sunita Verma", city: "Jaipur, RJ" },
-    item: "Radha Kundan Set (Bridal Edition)",
-    amount: 34999,
-    status: "Pending",
-    date: "Yesterday, 06:20 PM",
-  },
-  {
-    id: "#RR-8922",
-    customer: { name: "Deepika Iyer", city: "Bengaluru, KA" },
-    item: "Bridal Chura Set (Vermilion & Ivory)",
-    amount: 15999,
-    status: "Delivered",
-    date: "Sep 2, 2026",
-  },
-  {
-    id: "#RR-8921",
-    customer: { name: "Rohan Mehta", city: "New Delhi, DL" },
-    item: "Lakshmi Silver Cuff (Handcrafted)",
-    amount: 8999,
-    status: "Pending",
-    date: "Sep 1, 2026",
-  },
-];
+const RECENT_ORDERS: RecentOrder[] = [];
 
 const STATUS_CONFIG: Record<
   RecentOrder["status"],
@@ -88,7 +47,7 @@ const STATUS_CONFIG: Record<
 
 export default function AdminDashboardPage() {
   const [productList, setProductList] = useState<Product[]>(products);
-  const [orderList, setOrderList] = useState<any[]>(RECENT_ORDERS);
+  const [orderList, setOrderList] = useState<any[]>([]);
   const supabaseActive = isSupabaseConfigured();
 
   useEffect(() => {
@@ -101,9 +60,7 @@ export default function AdminDashboardPage() {
         if (liveProducts && liveProducts.length > 0) {
           setProductList(liveProducts);
         }
-        if (liveOrders && liveOrders.length > 0) {
-          setOrderList(liveOrders);
-        }
+        setOrderList(liveOrders || []);
       } catch (err) {
         console.error("Dashboard fetch error:", err);
       }
@@ -112,8 +69,8 @@ export default function AdminDashboardPage() {
   }, []);
 
   const topProducts = productList.slice(0, 4);
-  const totalRevenue = orderList.reduce((sum, o) => sum + (Number(o.total || o.amount) || 0), 0) || 2485000;
-  const totalOrdersCount = orderList.length || 156;
+  const totalRevenue = orderList.reduce((sum, o) => sum + (Number(o.total || o.amount) || 0), 0);
+  const totalOrdersCount = orderList.length;
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-8">
@@ -378,52 +335,74 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {RECENT_ORDERS.map((order) => {
-                  const statusInfo = STATUS_CONFIG[order.status];
-                  return (
-                    <tr
-                      key={order.id}
-                      className="border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="px-5 py-4 font-body font-mono text-xs font-medium text-[#D4A853]">
-                        {order.id}
-                      </td>
-                      <td className="px-5 py-4">
-                        <p className="font-body text-sm font-medium text-white">
-                          {order.customer.name}
-                        </p>
-                        <p className="font-body text-[11px] text-white/40">
-                          {order.customer.city}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 font-body text-sm text-white/80">
-                        {order.item}
-                      </td>
-                      <td className="px-5 py-4 font-heading text-base font-semibold text-white">
-                        {formatPrice(order.amount)}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border font-body",
-                            statusInfo.badge
-                          )}
-                        >
+                {orderList.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-3 text-white/40">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <rect x="1" y="3" width="15" height="13" rx="1" />
+                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                        </svg>
+                      </div>
+                      <p className="font-heading text-sm text-white/70">No orders placed yet</p>
+                      <p className="font-body text-xs text-white/40 mt-1">Incoming customer orders will appear here automatically.</p>
+                    </td>
+                  </tr>
+                ) : (
+                  orderList.slice(0, 5).map((order) => {
+                    const statusStr = String(order.status || "pending");
+                    const statusKey = (statusStr.charAt(0).toUpperCase() + statusStr.slice(1).toLowerCase()) as "Delivered" | "Shipped" | "Pending";
+                    const statusInfo = STATUS_CONFIG[statusKey] || STATUS_CONFIG.Pending;
+                    const customerName = typeof order.customer === "object" ? order.customer.name : (order.customer || "Guest Customer");
+                    const customerCity = typeof order.customer === "object" ? order.customer.city : (order.address?.split(",")?.[1]?.trim() || "India");
+                    const itemName = order.item || (order.items && order.items[0]?.name) || "Jewelry Order";
+                    const amount = Number(order.total || order.amount || 0);
+
+                    return (
+                      <tr
+                        key={order.id}
+                        className="border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="px-5 py-4 font-body font-mono text-xs font-medium text-[#D4A853]">
+                          {order.id}
+                        </td>
+                        <td className="px-5 py-4">
+                          <p className="font-body text-sm font-medium text-white">
+                            {customerName}
+                          </p>
+                          <p className="font-body text-[11px] text-white/40">
+                            {customerCity}
+                          </p>
+                        </td>
+                        <td className="px-5 py-4 font-body text-sm text-white/80">
+                          {itemName}
+                        </td>
+                        <td className="px-5 py-4 font-heading text-base font-semibold text-white">
+                          {formatPrice(amount)}
+                        </td>
+                        <td className="px-5 py-4">
                           <span
                             className={cn(
-                              "w-1.5 h-1.5 rounded-full",
-                              statusInfo.dot
+                              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border font-body",
+                              statusInfo.badge
                             )}
-                          />
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 font-body text-xs text-white/50 whitespace-nowrap">
-                        {order.date}
-                      </td>
-                    </tr>
-                  );
-                })}
+                          >
+                            <span
+                              className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                statusInfo.dot
+                              )}
+                            />
+                            {statusKey}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 font-body text-xs text-white/50 whitespace-nowrap">
+                          {order.date}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

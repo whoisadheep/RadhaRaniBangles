@@ -1,81 +1,20 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn, formatPrice } from "@/lib/utils";
+import {
+  fetchCoupons,
+  createCoupon,
+  toggleCouponStatus,
+  deleteCoupon,
+  type Coupon,
+} from "@/lib/supabase/coupons";
 
 /* ═══════════════════════════════════════════════════
-   Types & Mock Data
+   No fake initial coupons
    ═══════════════════════════════════════════════════ */
 
-interface Coupon {
-  id: string;
-  code: string;
-  discount: number;
-  type: "percentage" | "fixed";
-  minOrder: number;
-  maxUses: number;
-  usedCount: number;
-  active: boolean;
-  expiresAt: string;
-}
-
-const INITIAL_COUPONS: Coupon[] = [
-  {
-    id: "cpn-1",
-    code: "RADHA10",
-    discount: 10,
-    type: "percentage",
-    minOrder: 1999,
-    maxUses: 500,
-    usedCount: 342,
-    active: true,
-    expiresAt: "2026-12-31",
-  },
-  {
-    id: "cpn-2",
-    code: "FESTIVE15",
-    discount: 15,
-    type: "percentage",
-    minOrder: 2999,
-    maxUses: 300,
-    usedCount: 189,
-    active: true,
-    expiresAt: "2026-11-15",
-  },
-  {
-    id: "cpn-3",
-    code: "BRIDAL20",
-    discount: 20,
-    type: "percentage",
-    minOrder: 4999,
-    maxUses: 150,
-    usedCount: 142,
-    active: true,
-    expiresAt: "2026-10-31",
-  },
-  {
-    id: "cpn-4",
-    code: "FLAT500",
-    discount: 500,
-    type: "fixed",
-    minOrder: 2499,
-    maxUses: 200,
-    usedCount: 78,
-    active: true,
-    expiresAt: "2026-12-15",
-  },
-  {
-    id: "cpn-5",
-    code: "NEWUSER25",
-    discount: 25,
-    type: "percentage",
-    minOrder: 1499,
-    maxUses: 1000,
-    usedCount: 820,
-    active: false,
-    expiresAt: "2026-08-31",
-  },
-];
+const INITIAL_COUPONS: Coupon[] = [];
 
 type FilterStatus = "all" | "active" | "inactive";
 
@@ -147,16 +86,34 @@ export default function CouponsPage() {
     });
   }, [coupons, filterStatus, searchQuery]);
 
+  useEffect(() => {
+    async function loadCoupons() {
+      try {
+        const data = await fetchCoupons();
+        setCoupons(data || []);
+      } catch (err) {
+        console.error("Failed to load coupons:", err);
+        setCoupons([]);
+      }
+    }
+    loadCoupons();
+  }, []);
+
   // Handlers
-  const handleToggleActive = (id: string) => {
+  const handleToggleActive = async (id: string) => {
+    const target = coupons.find((c) => c.id === id);
+    if (!target) return;
+    const nextActive = !target.active;
     setCoupons((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, active: !c.active } : c))
+      prev.map((c) => (c.id === id ? { ...c, active: nextActive } : c))
     );
+    await toggleCouponStatus(id, nextActive);
   };
 
-  const handleDeleteCoupon = (id: string, code: string) => {
+  const handleDeleteCoupon = async (id: string, code: string) => {
     if (confirm(`Are you sure you want to delete coupon code "${code}"?`)) {
       setCoupons((prev) => prev.filter((c) => c.id !== id));
+      await deleteCoupon(id);
     }
   };
 
@@ -186,7 +143,7 @@ export default function CouponsPage() {
     setFormError("");
   };
 
-  const handleCreateCoupon = (e: React.FormEvent) => {
+  const handleCreateCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = formData.code.trim().toUpperCase().replace(/\s+/g, "");
 
@@ -219,19 +176,31 @@ export default function CouponsPage() {
       return;
     }
 
-    const newCoupon: Coupon = {
-      id: `cpn-${Date.now()}`,
+    const created = await createCoupon({
       code: cleanCode,
       discount: discountNum,
       type: formData.type,
       minOrder: minOrderNum,
       maxUses: maxUsesNum,
-      usedCount: 0,
-      active: true,
       expiresAt: formData.expiresAt,
-    };
+    });
 
-    setCoupons((prev) => [newCoupon, ...prev]);
+    if (created) {
+      setCoupons((prev) => [created, ...prev]);
+    } else {
+      const fallbackCoupon: Coupon = {
+        id: `cpn-${Date.now()}`,
+        code: cleanCode,
+        discount: discountNum,
+        type: formData.type,
+        minOrder: minOrderNum,
+        maxUses: maxUsesNum,
+        usedCount: 0,
+        active: true,
+        expiresAt: formData.expiresAt,
+      };
+      setCoupons((prev) => [fallbackCoupon, ...prev]);
+    }
     setIsModalOpen(false);
   };
 

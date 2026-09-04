@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { LuxuryPreloader } from "@/components/LuxuryPreloader";
 import { CartProvider } from "@/lib/cart";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { WishlistProvider } from "@/lib/wishlist";
 
 export const metadata: Metadata = {
@@ -36,7 +37,8 @@ export default function RootLayout({
             <SmoothScroll>
               <Navbar />
               <main className="min-h-screen w-full max-w-full overflow-x-hidden">{children}</main>
-              <Footer />
+            <Footer />
+            <WhatsAppButton />
             </SmoothScroll>
           </WishlistProvider>
         </CartProvider>

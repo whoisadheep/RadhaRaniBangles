@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { products as fallbackProducts, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
+import { getProductWhatsAppUrl } from "@/lib/whatsapp";
 import { useWishlist } from "@/lib/wishlist";
 import { fetchProducts } from "@/lib/supabase/products";
 
@@ -307,6 +308,15 @@ export default function ProductPage() {
                   </svg>
                 </button>
               </div>
+              <a
+                href={getProductWhatsAppUrl(product, selectedSize, quantity)}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full mt-3 border border-[#25D366] text-[#128C3B] hover:bg-[#25D366]/10 font-body text-sm uppercase tracking-widest py-4 rounded-full transition-colors flex items-center justify-center gap-3"
+              >
+                <svg width="19" height="19" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16.02 3C8.83 3 3 8.82 3 16c0 2.3.6 4.54 1.74 6.5L3 29l6.68-1.72A12.94 12.94 0 0 0 16.02 29C23.2 29 29 23.18 29 16S23.2 3 16.02 3Zm0 23.63c-2.02 0-4-.54-5.72-1.57l-.4-.24-3.96 1.02 1.06-3.86-.26-.4A10.57 10.57 0 1 1 16.02 26.63Z" /></svg>
+                Order via WhatsApp
+              </a>
 
               {/* Trust */}
               <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-border">

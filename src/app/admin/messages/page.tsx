@@ -2,95 +2,14 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { cn, truncateText } from "@/lib/utils";
-import { fetchMessages, toggleMessageRead, Message } from "@/lib/supabase/messages";
+import { fetchMessages, toggleMessageRead, deleteMessage, Message } from "@/lib/supabase/messages";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /* ═══════════════════════════════════════════════════
-   Mock Data Fallback
+   No fake initial messages
    ═══════════════════════════════════════════════════ */
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: "msg-1",
-    name: "Priyanka Sharma",
-    email: "priyanka.sharma@gmail.com",
-    subject: "Custom Bridal Set Inquiry",
-    message:
-      "Namaste Radha Rani team, I am getting married in December in Jaipur and looking for a customized 22K gold plated bridal bangle set matching my crimson lehenga. Could you share bespoke design options, stone customization possibilities, and standard delivery lead times?",
-    date: "2026-09-03",
-    read: false,
-  },
-  {
-    id: "msg-2",
-    name: "Ananya Patel",
-    email: "ananya.patel@outlook.com",
-    subject: "Size Guide Question",
-    message:
-      "Hello! I am confused between size 2.4 and 2.6 for the Kundan Peacock Kada. My wrist circumference measures approximately 6.5 inches. Which size would ensure a comfortable fit without slipping over the knuckles?",
-    date: "2026-09-02",
-    read: false,
-  },
-  {
-    id: "msg-3",
-    name: "Rajesh & Sunita Mehra",
-    email: "mehra.jewels@yahoo.co.in",
-    subject: "Bulk Order Request for Wedding Return Gifts",
-    message:
-      "We are interested in placing a bulk order of 60 pairs of the Antique Temple Kada for our daughter's wedding guests in Delhi. Do you offer corporate/wholesale pricing tiers and custom luxury velvet gift boxes with monogramming?",
-    date: "2026-09-01",
-    read: false,
-  },
-  {
-    id: "msg-4",
-    name: "Dr. Kavita Iyer",
-    email: "kavita.iyer@gmail.com",
-    subject: "Shipping to USA Query",
-    message:
-      "Hi Radha Rani, I live in California and absolutely adore your Polki Bangles collection. Do you ship to the US, and what are the typical insured DHL/FedEx shipping rates and delivery timelines to San Jose?",
-    date: "2026-08-30",
-    read: true,
-  },
-  {
-    id: "msg-5",
-    name: "Vikramaditya Singhania",
-    email: "v.singhania@heritagecrafts.in",
-    subject: "Bespoke Royal Heritage Collection Collaboration",
-    message:
-      "Greetings. We operate a luxury heritage boutique in Udaipur and would love to discuss featuring an exclusive Radha Rani bangles curation in our showroom. We would appreciate connecting with your lead designer or founder.",
-    date: "2026-08-28",
-    read: true,
-  },
-  {
-    id: "msg-6",
-    name: "Meera Nambiar",
-    email: "meera.nambiar88@gmail.com",
-    subject: "Restock Update for Ruby Floral Chooda",
-    message:
-      "Can you please let me know when the Ruby Floral Royal Chooda in size 2.8 will be back in stock? I added it to my wishlist but wanted to confirm before our festive celebrations commence next month.",
-    date: "2026-08-26",
-    read: true,
-  },
-  {
-    id: "msg-7",
-    name: "Sneha Kulkarni",
-    email: "sneha.kulkarni@rediffmail.com",
-    subject: "Care Instructions for Antique Gold Finish",
-    message:
-      "I recently received my order of the Royal Rajwadi Bangles set. They look magnificent and the craftsmanship is exquisite! Could you advise on the best practices to clean and store them to maintain the antique matte gold luster over the years?",
-    date: "2026-08-25",
-    read: true,
-  },
-  {
-    id: "msg-8",
-    name: "Tanya Deshmukh",
-    email: "tanyad@gmail.com",
-    subject: "Exchange Request - Incorrect Size Delivered",
-    message:
-      "Hello, I received Order #RR-8492 yesterday. The bangles are gorgeous, however I accidentally ordered size 2.2 instead of 2.6. The packaging is completely intact with original tags. Could you please assist with an exchange procedure?",
-    date: "2026-08-22",
-    read: false,
-  },
-];
+const INITIAL_MESSAGES: Message[] = [];
 
 type FilterTab = "all" | "unread" | "read";
 
@@ -122,7 +41,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>("msg-1");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<{ [id: string]: string }>({});
   const [replySent, setReplySent] = useState<{ [id: string]: boolean }>({});
   const [replyComposerOpen, setReplyComposerOpen] = useState<{ [id: string]: boolean }>({});
@@ -132,16 +51,28 @@ export default function MessagesPage() {
     async function loadMessages() {
       try {
         const data = await fetchMessages();
+        setMessages(data || []);
         if (data && data.length > 0) {
-          setMessages(data);
           setExpandedId(data[0]?.id || null);
+        } else {
+          setExpandedId(null);
         }
       } catch (err) {
         console.error("Failed to load messages from Supabase:", err);
+        setMessages([]);
+        setExpandedId(null);
       }
     }
     loadMessages();
   }, []);
+
+  const handleDeleteMessage = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    await deleteMessage(id);
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+    if (expandedId === id) setExpandedId(null);
+  };
 
   const unreadCount = useMemo(
     () => messages.filter((m) => !m.read).length,
@@ -216,13 +147,6 @@ export default function MessagesPage() {
     }
   };
 
-  const handleDeleteMessage = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setMessages((prev) => prev.filter((msg) => msg.id !== id));
-    if (expandedId === id) {
-      setExpandedId(null);
-    }
-  };
 
   const handleSendReply = (id: string, email: string) => {
     if (!replyText[id]?.trim()) return;

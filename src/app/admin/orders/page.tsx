@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { formatPrice, cn } from "@/lib/utils";
-import { fetchOrders, updateOrderStatus } from "@/lib/supabase/orders";
+import { fetchOrders, updateOrderStatus, deleteOrder } from "@/lib/supabase/orders";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /* ═══════════════════════════════════════════════════
@@ -38,152 +38,10 @@ export interface Order {
 type FilterTab = "all" | OrderStatus;
 
 /* ═══════════════════════════════════════════════════
-   Mock Order Data (10 Realistic Orders)
+   No fake initial orders
    ═══════════════════════════════════════════════════ */
 
-const INITIAL_ORDERS: Order[] = [
-  {
-    id: "ORD-2026-0901",
-    customer: "Priya Sharma",
-    email: "priya.sharma@example.com",
-    phone: "+91 98201 45678",
-    items: [
-      { name: "Ananya Gold Kada", quantity: 1, price: 45999 },
-      { name: "Priya Rose Gold Bangle", quantity: 1, price: 28999 },
-    ],
-    total: 74998,
-    status: "processing",
-    address: "A-402, Sea Green Towers, Worli Sea Face, Mumbai, Maharashtra 400018",
-    date: "03 Sep 2026",
-    trackingId: "BLUEDART-8829104",
-  },
-  {
-    id: "ORD-2026-0899",
-    customer: "Anjali Patel",
-    email: "anjali.patel92@example.com",
-    phone: "+91 98795 12345",
-    items: [
-      { name: "Meera Diamond Bangle", quantity: 1, price: 89999 },
-    ],
-    total: 89999,
-    status: "shipped",
-    address: "14, Shanti Kunj Society, Satellite, Ahmedabad, Gujarat 380015",
-    date: "02 Sep 2026",
-    trackingId: "DTDC-6729014",
-  },
-  {
-    id: "ORD-2026-0895",
-    customer: "Deepika Reddy",
-    email: "deepika.reddy@example.com",
-    phone: "+91 99490 87654",
-    items: [
-      { name: "Bridal Chura Set", quantity: 1, price: 15999 },
-      { name: "Radha Kundan Set", quantity: 2, price: 34999 },
-    ],
-    total: 85997,
-    status: "delivered",
-    address: "Villa 22, Jubilee Hills, Road No. 36, Hyderabad, Telangana 500033",
-    date: "01 Sep 2026",
-    trackingId: "DELHIVERY-9921476",
-  },
-  {
-    id: "ORD-2026-0892",
-    customer: "Kavita Singhania",
-    email: "kavita.singhania@example.com",
-    phone: "+91 98112 34567",
-    items: [
-      { name: "Devi Temple Bangle", quantity: 1, price: 62999 },
-    ],
-    total: 62999,
-    status: "pending",
-    address: "C-12, Greater Kailash Part 1, New Delhi, Delhi 110048",
-    date: "04 Sep 2026",
-  },
-  {
-    id: "ORD-2026-0888",
-    customer: "Sunita Agarwal",
-    email: "sunita.agarwal@example.com",
-    phone: "+91 94140 67890",
-    items: [
-      { name: "Radha Kundan Set", quantity: 1, price: 34999 },
-      { name: "Lakshmi Silver Cuff", quantity: 2, price: 8999 },
-    ],
-    total: 52997,
-    status: "delivered",
-    address: "B-88, Malviya Nagar, Jaipur, Rajasthan 302017",
-    date: "30 Aug 2026",
-    trackingId: "BLUEDART-7719234",
-  },
-  {
-    id: "ORD-2026-0884",
-    customer: "Meenakshi Sundaram",
-    email: "meenakshi.sundaram@example.com",
-    phone: "+91 98401 23456",
-    items: [
-      { name: "Kavya Platinum Band", quantity: 1, price: 125999 },
-    ],
-    total: 125999,
-    status: "processing",
-    address: "Flat 3B, Temple View Apartments, Mylapore, Chennai, Tamil Nadu 600004",
-    date: "29 Aug 2026",
-    trackingId: "RRB-DEL-98432",
-  },
-  {
-    id: "ORD-2026-0880",
-    customer: "Pooja Banerjee",
-    email: "pooja.banerjee@example.com",
-    phone: "+91 98300 98765",
-    items: [
-      { name: "Lakshmi Silver Cuff", quantity: 1, price: 8999 },
-    ],
-    total: 8999,
-    status: "cancelled",
-    address: "Flat 12A, South City Towers, Prince Anwar Shah Road, Kolkata, West Bengal 700068",
-    date: "28 Aug 2026",
-  },
-  {
-    id: "ORD-2026-0876",
-    customer: "Neha Kapoor",
-    email: "neha.kapoor@example.com",
-    phone: "+91 98180 54321",
-    items: [
-      { name: "Ananya Gold Kada", quantity: 2, price: 45999 },
-    ],
-    total: 91998,
-    status: "shipped",
-    address: "Plot 45, Sector 15, Chandigarh, Punjab 160015",
-    date: "27 Aug 2026",
-    trackingId: "DTDC-4481902",
-  },
-  {
-    id: "ORD-2026-0871",
-    customer: "Rashmi Hegde",
-    email: "rashmi.hegde@example.com",
-    phone: "+91 99001 12233",
-    items: [
-      { name: "Bridal Chura Set", quantity: 1, price: 15999 },
-      { name: "Priya Rose Gold Bangle", quantity: 1, price: 28999 },
-    ],
-    total: 44998,
-    status: "delivered",
-    address: "7th Cross, Indiranagar 1st Stage, Bengaluru, Karnataka 560038",
-    date: "26 Aug 2026",
-    trackingId: "DELHIVERY-7738291",
-  },
-  {
-    id: "ORD-2026-0865",
-    customer: "Tanvi Deshmukh",
-    email: "tanvi.deshmukh@example.com",
-    phone: "+91 97654 32109",
-    items: [
-      { name: "Ananya Gold Kada", quantity: 1, price: 45999 },
-    ],
-    total: 45999,
-    status: "pending",
-    address: "B-15, Prabhat Road, Lane 4, Deccan Gymkhana, Pune, Maharashtra 411004",
-    date: "04 Sep 2026",
-  },
-];
+const INITIAL_ORDERS: Order[] = [];
 
 /* ═══════════════════════════════════════════════════
    Status Badges Helper
@@ -265,15 +123,23 @@ export default function AdminOrdersPage() {
     async function loadOrders() {
       try {
         const data = await fetchOrders();
-        if (data && data.length > 0) {
-          setOrders(data as Order[]);
-        }
+        setOrders((data || []) as Order[]);
       } catch (err) {
         console.error("Failed to load orders from Supabase:", err);
+        setOrders([]);
       }
     }
     loadOrders();
   }, []);
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm("Are you sure you want to delete this order?")) return;
+    await deleteOrder(orderId);
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    if (selectedOrder?.id === orderId) setSelectedOrder(null);
+    setToastMessage("Order deleted successfully");
+    setTimeout(() => setToastMessage(null), 2500);
+  };
 
   // Filter tabs config
   const tabs: { key: FilterTab; label: string }[] = [
@@ -1001,33 +867,45 @@ export default function AdminOrdersPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-end gap-3">
+            <div className="px-6 py-4 border-t border-white/[0.08] bg-white/[0.02] flex items-center justify-between gap-3">
               <button
                 type="button"
-                onClick={handleCloseModal}
-                className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white font-body text-xs transition-colors cursor-pointer"
+                onClick={() => handleDeleteOrder(selectedOrder.id)}
+                className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 font-body text-xs transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveChanges}
-                className="px-5 py-2 rounded-xl bg-[#A16207] hover:bg-[#7C4D05] text-white font-body text-xs font-semibold tracking-wide transition-all shadow-md hover:shadow-[#A16207]/20 cursor-pointer flex items-center gap-1.5"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                 </svg>
-                Save Changes
+                Delete Order
               </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white font-body text-xs transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveChanges}
+                  className="px-5 py-2 rounded-xl bg-[#A16207] hover:bg-[#7C4D05] text-white font-body text-xs font-semibold tracking-wide transition-all shadow-md hover:shadow-[#A16207]/20 cursor-pointer flex items-center gap-1.5"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>
