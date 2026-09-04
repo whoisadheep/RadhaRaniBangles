@@ -15,20 +15,14 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Touch devices already have hardware-accelerated momentum scrolling (120Hz).
-    // Hijacking touch with JS causes noticeable input lag, jitter, and sluggishness.
-    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    if (isTouchDevice) {
-      return;
-    }
-
     const lenis = new Lenis({
-      duration: 0.9,
+      duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
+      gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 0.9,
-      syncTouch: false,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.5,
     });
 
     let rafId: number;
@@ -39,6 +33,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     }
 
     rafId = requestAnimationFrame(raf);
+
+    // Reset scroll to top smoothly on page transition
+    lenis.scrollTo(0, { immediate: true });
 
     return () => {
       cancelAnimationFrame(rafId);
