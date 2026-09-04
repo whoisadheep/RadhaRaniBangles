@@ -306,11 +306,12 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-tr from-accent/10 via-champagne/40 to-transparent rounded-full blur-2xl scale-90 pointer-events-none" />
 
                 {/* Hero Bangles Transparent Cutout */}
-                <div className="relative z-10 animate-float">
+                <div className="relative z-10 animate-float will-change-transform [transform:translateZ(0)]">
                   <img
                     src="/images/hero-bangles.png"
                     alt="Radha Rani Luxury Bangles Showcase"
-                    className="w-full h-auto object-contain max-h-[500px] drop-shadow-[0_25px_35px_rgba(0,0,0,0.15)] transition-transform duration-700 hover:scale-105 select-none"
+                    className="w-full h-auto object-contain max-h-[500px] drop-shadow-[0_20px_30px_rgba(0,0,0,0.12)] transition-transform duration-500 hover:scale-105 select-none"
+                    loading="eager"
                   />
                 </div>
 

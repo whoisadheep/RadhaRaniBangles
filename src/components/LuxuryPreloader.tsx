@@ -16,77 +16,26 @@ import { products, categories, testimonials } from "@/lib/data";
    the site is revealed.
    ═══════════════════════════════════════════════════ */
 
-/** Collect EVERY image used across the entire site */
-function getAllSiteImages(): string[] {
-  const urls = new Set<string>();
-
-  // Hero image
-  urls.add("/images/hero-bangles.png");
-
-  // Category images
-  for (const cat of categories) {
-    urls.add(cat.image);
-  }
-
-  // All product images (every variant)
-  for (const p of products) {
-    for (const img of p.images) {
-      urls.add(img);
-    }
-  }
-
-  // Testimonial avatars
-  for (const t of testimonials) {
-    urls.add(t.avatar);
-  }
-
-  // About page hero
-  urls.add(
-    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1000&q=85"
-  );
-
-  // Homepage craftsmanship banner
-  urls.add(
-    "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?auto=format&fit=crop&w=1600&q=85"
-  );
-
-  // Instagram gallery
-  const instaUrls = [
-    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=600&q=80",
-  ];
-  for (const u of instaUrls) {
-    urls.add(u);
-  }
-
-  return Array.from(urls);
-}
-
-const ALL_IMAGES = getAllSiteImages();
+const CRITICAL_IMAGES = ["/images/hero-bangles.png"];
 
 const LUXURY_PHRASES = [
   "Awakening Royal Heritage…",
   "Selecting 22K Hallmarked Gold…",
   "Polishing Precious Stones…",
-  "Arranging Curated Collections…",
   "Unveiling Timeless Grace…",
 ];
 
 /* ── Dust Motes: tiny gold sparks that burst outward ── */
-const DUST_PARTICLES = Array.from({ length: 20 }, (_, i) => {
-  const angle = Math.random() * 360;
-  const dist = 40 + Math.random() * 80;
+const DUST_PARTICLES = Array.from({ length: 12 }, (_, i) => {
+  const angle = (i / 12) * 360;
+  const dist = 50 + (i % 3) * 25;
   return {
     id: i,
     dx: Math.cos((angle * Math.PI) / 180) * dist,
     dy: Math.sin((angle * Math.PI) / 180) * dist,
-    size: 1.5 + Math.random() * 2.5,
-    delay: Math.random() * 3,
-    duration: 2.5 + Math.random() * 2,
+    size: 2,
+    delay: (i * 0.15) % 1.5,
+    duration: 2,
   };
 });
 
@@ -102,85 +51,58 @@ export function LuxuryPreloader() {
     setTimeout(() => {
       setLoading(false);
       document.body.style.overflow = "";
-      sessionStorage.setItem("rr_preloader_seen", "true");
-    }, 1000);
+      try {
+        sessionStorage.setItem("rr_preloader_seen", "true");
+      } catch {}
+    }, 600);
   }, []);
 
   useEffect(() => {
-    if (pathname.startsWith("/admin")) return;
+    if (pathname.startsWith("/admin")) {
+      setLoading(false);
+      return;
+    }
+
+    // Skip preloader on repeat visits or subpages to prevent lag
+    try {
+      if (sessionStorage.getItem("rr_preloader_seen")) {
+        setLoading(false);
+        return;
+      }
+    } catch {}
+
     document.body.style.overflow = "hidden";
 
-    const hasVisited = sessionStorage.getItem("rr_preloader_seen");
-    const totalImages = ALL_IMAGES.length;
-    let loadedCount = 0;
-    let allImagesLoaded = false;
-    const startTime = Date.now();
-    const minDuration = hasVisited ? 1500 : 2800;
-
-    const checkComplete = () => {
-      if (allImagesLoaded) return;
-      loadedCount++;
-      if (loadedCount >= totalImages) {
-        allImagesLoaded = true;
-      }
-    };
-
-    // Preload ALL images used on the site
-    ALL_IMAGES.forEach((src) => {
+    // Only preload the critical above-the-fold hero image
+    CRITICAL_IMAGES.forEach((src) => {
       const img = new Image();
       img.src = src;
-      img.onload = checkComplete;
-      img.onerror = checkComplete; // count errors too so we don't hang
     });
 
-    // Smooth progress incrementer — driven by actual image load count
+    const startTime = Date.now();
+    const duration = 1000; // Snappy 1 second intro
+
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        const elapsed = Date.now() - startTime;
-        // Image-based progress (the real metric)
-        const imageProg = Math.round((loadedCount / totalImages) * 100);
-        // Time-based floor (so it doesn't sit at 0 on fast loads)
-        const timeFloor = Math.min(90, Math.round((elapsed / minDuration) * 90));
-        // Use whichever is higher, but cap time-floor at 90 so
-        // the last 10% always waits for real image completion
-        const target = Math.max(imageProg, timeFloor);
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, Math.round((elapsed / duration) * 100));
 
-        if (prev < target) {
-          const step = Math.ceil((target - prev) / 6) || 1;
-          const next = Math.min(100, prev + step);
+      setProgress(pct);
+      if (pct >= 75) setPhraseIndex(3);
+      else if (pct >= 50) setPhraseIndex(2);
+      else if (pct >= 25) setPhraseIndex(1);
+      else setPhraseIndex(0);
 
-          if (next >= 80) setPhraseIndex(4);
-          else if (next >= 60) setPhraseIndex(3);
-          else if (next >= 40) setPhraseIndex(2);
-          else if (next >= 20) setPhraseIndex(1);
-          else setPhraseIndex(0);
-
-          return next;
-        }
-
-        // Only exit when ALL images are loaded AND min time passed
-        if (allImagesLoaded && elapsed >= minDuration && prev >= 100) {
-          clearInterval(interval);
-          setTimeout(triggerExit, 400);
-        }
-
-        return prev;
-      });
-    }, 30);
-
-    // Safety timeout — don't hang forever if images fail (max 8s)
-    const safety = setTimeout(() => {
-      clearInterval(interval);
-      setProgress(100);
-      triggerExit();
-    }, 8000);
+      if (pct >= 100) {
+        clearInterval(interval);
+        setTimeout(triggerExit, 250);
+      }
+    }, 40);
 
     return () => {
       clearInterval(interval);
-      clearTimeout(safety);
       document.body.style.overflow = "";
     };
-  }, [triggerExit]);
+  }, [pathname, triggerExit]);
 
   if (pathname.startsWith("/admin") || !loading) return null;
 
@@ -303,6 +225,14 @@ export function LuxuryPreloader() {
           transform: isExiting ? "scale(1.08)" : "scale(1)",
         }}
       >
+        {/* Quick Skip button */}
+        <button
+          onClick={triggerExit}
+          className="absolute top-6 right-6 z-20 font-body text-[10px] uppercase tracking-widest text-white/40 hover:text-white/80 py-1.5 px-3 rounded-full border border-white/10 hover:border-white/20 transition-colors cursor-pointer"
+          aria-label="Skip introduction"
+        >
+          Skip ✕
+        </button>
         {/* ─────────────────────────────────
             THE BANGLE — Self-drawing SVG
             The main bangle draws its stroke
@@ -549,7 +479,7 @@ export function LuxuryPreloader() {
                 color: "rgba(255,255,255,0.25)",
               }}
             >
-              Loading {ALL_IMAGES.length} assets
+              Curating Royal Collection
             </span>
             <span
               className="font-body tabular-nums"
@@ -558,8 +488,7 @@ export function LuxuryPreloader() {
                 color: "rgba(212,168,83,0.5)",
               }}
             >
-              {Math.round((progress / 100) * ALL_IMAGES.length)}/
-              {ALL_IMAGES.length}
+              {progress}%
             </span>
           </div>
 
