@@ -1,21 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { cn, truncateText } from "@/lib/utils";
+import { fetchMessages, toggleMessageRead, Message } from "@/lib/supabase/messages";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /* ═══════════════════════════════════════════════════
-   Types & Mock Data
+   Mock Data Fallback
    ═══════════════════════════════════════════════════ */
-
-interface Message {
-  id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
 
 const INITIAL_MESSAGES: Message[] = [
   {
@@ -134,6 +126,22 @@ export default function MessagesPage() {
   const [replyText, setReplyText] = useState<{ [id: string]: string }>({});
   const [replySent, setReplySent] = useState<{ [id: string]: boolean }>({});
   const [replyComposerOpen, setReplyComposerOpen] = useState<{ [id: string]: boolean }>({});
+  const supabaseActive = isSupabaseConfigured();
+
+  useEffect(() => {
+    async function loadMessages() {
+      try {
+        const data = await fetchMessages();
+        if (data && data.length > 0) {
+          setMessages(data);
+          setExpandedId(data[0]?.id || null);
+        }
+      } catch (err) {
+        console.error("Failed to load messages from Supabase:", err);
+      }
+    }
+    loadMessages();
+  }, []);
 
   const unreadCount = useMemo(
     () => messages.filter((m) => !m.read).length,
@@ -170,12 +178,24 @@ export default function MessagesPage() {
   const toggleReadStatus = (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     setMessages((prev) =>
-      prev.map((msg) => (msg.id === id ? { ...msg, read: !msg.read } : msg))
+      prev.map((msg) => {
+        if (msg.id === id) {
+          const nextRead = !msg.read;
+          toggleMessageRead(id, nextRead).catch(console.error);
+          return { ...msg, read: nextRead };
+        }
+        return msg;
+      })
     );
   };
 
   const markAllAsRead = () => {
-    setMessages((prev) => prev.map((msg) => ({ ...msg, read: true })));
+    setMessages((prev) =>
+      prev.map((msg) => {
+        toggleMessageRead(msg.id, true).catch(console.error);
+        return { ...msg, read: true };
+      })
+    );
   };
 
   const handleCardClick = (id: string) => {
@@ -185,7 +205,13 @@ export default function MessagesPage() {
       setExpandedId(id);
       // Auto mark as read on open if unread
       setMessages((prev) =>
-        prev.map((msg) => (msg.id === id ? { ...msg, read: true } : msg))
+        prev.map((msg) => {
+          if (msg.id === id && !msg.read) {
+            toggleMessageRead(id, true).catch(console.error);
+            return { ...msg, read: true };
+          }
+          return msg;
+        })
       );
     }
   };
@@ -224,6 +250,16 @@ export default function MessagesPage() {
               {unreadCount > 0 && (
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-medium font-body bg-[#A16207]/20 text-[#D4A853] border border-[#A16207]/40 shadow-sm animate-pulse-gold">
                   {unreadCount} unread
+                </span>
+              )}
+              {supabaseActive ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Supabase
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  Offline Mode (Local State)
                 </span>
               )}
             </div>

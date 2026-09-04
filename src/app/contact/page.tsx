@@ -2,9 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { submitContactMessage } from "@/lib/supabase/messages";
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    subject: "General Inquiry",
+    message: "",
+  });
 
   return (
     <>
@@ -136,9 +145,23 @@ export default function ContactPage() {
                   </div>
                 ) : (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
-                      setSubmitted(true);
+                      setLoading(true);
+                      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+                      try {
+                        await submitContactMessage({
+                          name: fullName,
+                          email: formData.email,
+                          subject: formData.subject,
+                          message: formData.message,
+                        });
+                      } catch (err) {
+                        console.error("Failed to submit message:", err);
+                      } finally {
+                        setLoading(false);
+                        setSubmitted(true);
+                      }
                     }}
                     className="space-y-5"
                   >
@@ -151,6 +174,8 @@ export default function ContactPage() {
                           id="firstName"
                           type="text"
                           required
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                           className="w-full bg-white/80 border border-border rounded-lg px-4 py-3 font-body text-sm outline-none focus:border-accent transition-colors"
                           placeholder="Priya"
                         />
@@ -163,6 +188,8 @@ export default function ContactPage() {
                           id="lastName"
                           type="text"
                           required
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                           className="w-full bg-white/80 border border-border rounded-lg px-4 py-3 font-body text-sm outline-none focus:border-accent transition-colors"
                           placeholder="Sharma"
                         />
@@ -177,6 +204,8 @@ export default function ContactPage() {
                         id="email"
                         type="email"
                         required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full bg-white/80 border border-border rounded-lg px-4 py-3 font-body text-sm outline-none focus:border-accent transition-colors"
                         placeholder="priya@example.com"
                       />
@@ -188,6 +217,8 @@ export default function ContactPage() {
                       </label>
                       <select
                         id="subject"
+                        value={formData.subject}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                         className="w-full bg-white/80 border border-border rounded-lg px-4 py-3 font-body text-sm outline-none focus:border-accent transition-colors cursor-pointer"
                       >
                         <option>General Inquiry</option>
@@ -206,6 +237,8 @@ export default function ContactPage() {
                         id="message"
                         required
                         rows={5}
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         className="w-full bg-white/80 border border-border rounded-lg px-4 py-3 font-body text-sm outline-none focus:border-accent transition-colors resize-none"
                         placeholder="Tell us how we can help..."
                       />
@@ -213,9 +246,10 @@ export default function ContactPage() {
 
                     <button
                       type="submit"
-                      className="w-full bg-accent hover:bg-accent-dark text-on-accent font-body text-sm uppercase tracking-widest py-4 rounded-full transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(161,98,7,0.25)]"
+                      disabled={loading}
+                      className="w-full bg-accent hover:bg-accent-dark text-on-accent font-body text-sm uppercase tracking-widest py-4 rounded-full transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(161,98,7,0.25)] flex items-center justify-center gap-2"
                     >
-                      Send Message
+                      {loading ? "Sending..." : "Send Message"}
                     </button>
                   </form>
                 )}

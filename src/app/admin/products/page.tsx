@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { products as initialProducts, categories, Product } from "@/lib/data";
 import { formatPrice, cn } from "@/lib/utils";
+import { fetchProducts, upsertProduct, deleteProduct } from "@/lib/supabase/products";
+import { uploadProductImage } from "@/lib/supabase/storage";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export default function ProductsPage() {
   const [productList, setProductList] = useState<Product[]>(initialProducts);
@@ -14,8 +17,25 @@ export default function ProductsPage() {
   const [modalTab, setModalTab] = useState<"info" | "images" | "specs" | "care">("info");
   const [isDragging, setIsDragging] = useState(false);
   const [urlInput, setUrlInput] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabaseActive = isSupabaseConfigured();
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await fetchProducts();
+        setProductList(data);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   // Form state with all Details & Care fields and array of images
   const [formData, setFormData] = useState({
@@ -47,9 +67,14 @@ export default function ProductsPage() {
     });
   }, [productList, searchQuery, selectedCategory]);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
       setProductList((prev) => prev.filter((p) => p.id !== id));
+      try {
+        await deleteProduct(id);
+      } catch (err) {
+        console.error("Failed to delete from database:", err);
+      }
     }
   };
 
@@ -179,7 +204,7 @@ export default function ProductsPage() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) {
       alert("Please enter a product name");
       return;
@@ -189,76 +214,93 @@ export default function ProductsPage() {
       return;
     }
 
-    const category = categories.find((c) => c.slug === formData.categorySlug)?.name || "Gold Bangles";
-    const careInstructions = formData.careInstructionsText
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const safeImages =
-      formData.images.length > 0 ? formData.images : ["/images/hero-bangles.png"];
-
-    if (editingProduct) {
-      setProductList((prev) =>
-        prev.map((p) => {
-          if (p.id === editingProduct.id) {
-            return {
-              ...p,
-              name: formData.name,
-              price: Number(formData.price),
-              originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
-              category,
-              categorySlug: formData.categorySlug,
-              description: formData.description,
-              craftsmanshipDetails: formData.craftsmanshipDetails,
-              material: formData.material,
-              weight: formData.weight,
-              size: formData.size,
-              hallmark: formData.hallmark,
-              boxContents: formData.boxContents,
-              careInstructions,
-              images: safeImages,
-              isNew: formData.isNew,
-              isBestseller: formData.isBestseller,
-            };
-          }
-          return p;
-        })
+    setSaving(true);
+    try {
+      // 1. Upload any base64/file images to Supabase Storage (or keep local if offline)
+      const uploadedImages = await Promise.all(
+        formData.images.map((img) => uploadProductImage(img))
       );
-    } else {
-      const newId = `prod-${Math.random().toString(36).substring(2, 9)}`;
-      const newSlug = formData.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
 
-      const newProduct: Product = {
-        id: newId,
-        slug: newSlug,
-        name: formData.name,
-        price: Number(formData.price),
-        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
-        category,
-        categorySlug: formData.categorySlug,
-        description: formData.description,
-        craftsmanshipDetails: formData.craftsmanshipDetails,
-        material: formData.material,
-        weight: formData.weight,
-        size: formData.size,
-        hallmark: formData.hallmark,
-        boxContents: formData.boxContents,
-        careInstructions,
-        images: safeImages,
-        isNew: formData.isNew,
-        isBestseller: formData.isBestseller,
-        rating: 5.0,
-        reviews: 1,
-      };
+      const safeImages =
+        uploadedImages.filter(Boolean).length > 0
+          ? uploadedImages.filter(Boolean)
+          : ["/images/hero-bangles.png"];
 
-      setProductList((prev) => [newProduct, ...prev]);
+      const category = categories.find((c) => c.slug === formData.categorySlug)?.name || "Gold Bangles";
+      const careInstructions = formData.careInstructionsText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      let productToSave: Product;
+
+      if (editingProduct) {
+        productToSave = {
+          ...editingProduct,
+          name: formData.name,
+          price: Number(formData.price),
+          originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
+          category,
+          categorySlug: formData.categorySlug,
+          description: formData.description,
+          craftsmanshipDetails: formData.craftsmanshipDetails,
+          material: formData.material,
+          weight: formData.weight,
+          size: formData.size,
+          hallmark: formData.hallmark,
+          boxContents: formData.boxContents,
+          careInstructions,
+          images: safeImages,
+          isNew: formData.isNew,
+          isBestseller: formData.isBestseller,
+        };
+
+        setProductList((prev) =>
+          prev.map((p) => (p.id === editingProduct.id ? productToSave : p))
+        );
+      } else {
+        const newId = `prod-${Math.random().toString(36).substring(2, 9)}`;
+        const newSlug = formData.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)+/g, "");
+
+        productToSave = {
+          id: newId,
+          slug: newSlug,
+          name: formData.name,
+          price: Number(formData.price),
+          originalPrice: formData.originalPrice ? Number(formData.originalPrice) : undefined,
+          category,
+          categorySlug: formData.categorySlug,
+          description: formData.description,
+          craftsmanshipDetails: formData.craftsmanshipDetails,
+          material: formData.material,
+          weight: formData.weight,
+          size: formData.size,
+          hallmark: formData.hallmark,
+          boxContents: formData.boxContents,
+          careInstructions,
+          images: safeImages,
+          isNew: formData.isNew,
+          isBestseller: formData.isBestseller,
+          rating: 5.0,
+          reviews: 1,
+        };
+
+        setProductList((prev) => [productToSave, ...prev]);
+      }
+
+      // 2. Persist to Supabase
+      await upsertProduct(productToSave);
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Save product error:", err);
+      // Still close modal since local state is already updated
+      setIsModalOpen(false);
+    } finally {
+      setSaving(false);
     }
-
-    setIsModalOpen(false);
   };
 
   return (
@@ -270,6 +312,16 @@ export default function ProductsPage() {
           <span className="bg-[#A16207]/20 border border-[#A16207]/30 text-[#D4A853] px-2.5 py-0.5 rounded-full text-xs font-medium">
             {productList.length} bangles
           </span>
+          {supabaseActive ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live Supabase
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              Offline Mode (Local State)
+            </span>
+          )}
         </div>
         <button
           onClick={openAddModal}
@@ -1028,10 +1080,20 @@ export default function ProductsPage() {
                 </button>
                 <button
                   type="button"
+                  disabled={saving}
                   onClick={handleSave}
-                  className="bg-[#A16207] hover:bg-[#7C4D05] text-white px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-md cursor-pointer"
+                  className="bg-[#A16207] hover:bg-[#7C4D05] disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-md cursor-pointer flex items-center gap-2"
                 >
-                  {editingProduct ? "Save Changes" : "Create Bangle"}
+                  {saving ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Saving to Cloud...
+                    </>
+                  ) : editingProduct ? (
+                    "Save Changes"
+                  ) : (
+                    "Create Bangle"
+                  )}
                 </button>
               </div>
             </div>

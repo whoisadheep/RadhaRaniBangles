@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { formatPrice, cn } from "@/lib/utils";
+import { fetchOrders, updateOrderStatus } from "@/lib/supabase/orders";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 /* ═══════════════════════════════════════════════════
    Types & Interfaces
@@ -257,6 +259,21 @@ export default function AdminOrdersPage() {
   const [editStatus, setEditStatus] = useState<OrderStatus>("pending");
   const [editTrackingId, setEditTrackingId] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const supabaseActive = isSupabaseConfigured();
+
+  useEffect(() => {
+    async function loadOrders() {
+      try {
+        const data = await fetchOrders();
+        if (data && data.length > 0) {
+          setOrders(data as Order[]);
+        }
+      } catch (err) {
+        console.error("Failed to load orders from Supabase:", err);
+      }
+    }
+    loadOrders();
+  }, []);
 
   // Filter tabs config
   const tabs: { key: FilterTab; label: string }[] = [
@@ -332,7 +349,7 @@ export default function AdminOrdersPage() {
   };
 
   // Save changes to order
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (!selectedOrder) return;
 
     const updatedOrders = orders.map((o) => {
@@ -347,6 +364,16 @@ export default function AdminOrdersPage() {
     });
 
     setOrders(updatedOrders);
+
+    try {
+      await updateOrderStatus(
+        selectedOrder.id,
+        editStatus,
+        editTrackingId.trim() || undefined
+      );
+    } catch (err) {
+      console.error("Failed to update order status in Supabase:", err);
+    }
 
     // Show temporary toast feedback
     setToastMessage(`Order ${selectedOrder.id} updated successfully`);
@@ -379,13 +406,23 @@ export default function AdminOrdersPage() {
       {/* ── 1. Page Header & Stats Row ── */}
       <div className="flex flex-col gap-6">
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
+          <div className="flex items-center gap-2.5 mb-1 flex-wrap">
             <h1 className="font-heading text-2xl lg:text-3xl font-semibold text-white tracking-wide">
               Orders
             </h1>
             <span className="font-body text-xs px-2.5 py-0.5 rounded-full bg-[#A16207]/15 text-[#D4A853] border border-[#A16207]/30">
               {stats.total} Total
             </span>
+            {supabaseActive ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Supabase
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                Offline Mode (Local State)
+              </span>
+            )}
           </div>
           <p className="font-body text-xs lg:text-sm text-white/50">
             View, track, and update fulfillment for customer orders
