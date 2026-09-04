@@ -12,7 +12,10 @@ export interface CartItem {
 interface CartContextValue {
   items: CartItem[];
   itemCount: number;
-  addItem: (product: Product, size?: string, quantity?: number) => void;
+  isDrawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
+  addItem: (product: Product, size?: string, quantity?: number, openCartDrawer?: boolean) => void;
   updateQuantity: (index: number, quantity: number) => void;
   removeItem: (index: number) => void;
   clearCart: () => void;
@@ -24,6 +27,7 @@ const CART_STORAGE_KEY = "radha-rani-cart";
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -42,10 +46,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (hydrated) window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
+  const openDrawer = () => setIsDrawerOpen(true);
+  const closeDrawer = () => setIsDrawerOpen(false);
+
   const value = useMemo<CartContextValue>(() => ({
     items,
     itemCount: items.reduce((total, item) => total + item.quantity, 0),
-    addItem: (product, size = "2.6", quantity = 1) => {
+    isDrawerOpen,
+    openDrawer,
+    closeDrawer,
+    addItem: (product, size = "2.6", quantity = 1, openCartDrawer = true) => {
       setItems((current) => {
         const existingIndex = current.findIndex(
           (item) => item.product.id === product.id && item.size === size
@@ -55,6 +65,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           index === existingIndex ? { ...item, quantity: item.quantity + quantity } : item
         );
       });
+      if (openCartDrawer) {
+        setIsDrawerOpen(true);
+      }
     },
     updateQuantity: (index, quantity) => setItems((current) =>
       current.flatMap((item, itemIndex) =>
@@ -63,7 +76,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     ),
     removeItem: (index) => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index)),
     clearCart: () => setItems([]),
-  }), [items]);
+  }), [items, isDrawerOpen]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

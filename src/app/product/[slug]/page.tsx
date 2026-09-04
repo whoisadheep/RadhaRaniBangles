@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { products as fallbackProducts, Product } from "@/lib/data";
@@ -42,6 +42,8 @@ export default function ProductPage() {
   const [activeImage, setActiveImage] = useState(product?.images[0] || "");
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
+  const buyButtonRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
 
   // Sync activeImage once product loads
   useEffect(() => {
@@ -49,6 +51,19 @@ export default function ProductPage() {
       setActiveImage(product.images[0]);
     }
   }, [product]);
+
+  // Track when main buy button scrolls out of view on mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!buyButtonRef.current) return;
+      const rect = buyButtonRef.current.getBoundingClientRect();
+      // Show sticky bar when the bottom of main buy button is above the viewport top
+      setShowStickyBar(rect.bottom < 0);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   if (!product && loading) {
     return (
@@ -276,7 +291,7 @@ export default function ProductPage() {
               </div>
 
               {/* Add to Cart + Wishlist */}
-              <div className="flex gap-3 mt-8">
+              <div ref={buyButtonRef} className="flex gap-3 mt-8">
                 <button
                   onClick={() => { addItem(product, selectedSize, quantity); setAdded(true); }}
                   className="flex-1 bg-accent hover:bg-accent-dark text-on-accent font-body text-sm uppercase tracking-widest py-4 rounded-full transition-all duration-300 cursor-pointer hover:shadow-[0_8px_30px_rgba(161,98,7,0.25)] flex items-center justify-center gap-3"
@@ -473,6 +488,65 @@ export default function ProductPage() {
           )}
         </div>
       </section>
+
+      {/* ── Sticky Mobile Add-to-Cart Bar ── */}
+      <div
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-border shadow-[0_-4px_24px_rgba(0,0,0,0.08)] px-4 py-3 transition-transform duration-300",
+          showStickyBar ? "translate-y-0" : "translate-y-full pointer-events-none"
+        )}
+        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      >
+        <div className="flex items-center gap-3">
+          {/* Mini Thumbnail */}
+          <div className="w-12 h-12 rounded-xl overflow-hidden bg-champagne shrink-0 border border-border/60">
+            <img
+              src={activeImage || product.images[0]}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Product Info + Size */}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-heading text-sm font-semibold text-primary truncate leading-tight">
+              {product.name}
+            </h4>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="font-body text-xs font-bold text-primary">
+                {formatPrice(product.price)}
+              </span>
+              <select
+                value={selectedSize}
+                onChange={(e) => setSelectedSize(e.target.value)}
+                className="bg-neutral-100 text-secondary border border-border/70 rounded px-1.5 py-0.5 text-[10px] font-body outline-none cursor-pointer"
+                aria-label="Select size"
+              >
+                {sizes.map((s) => (
+                  <option key={s} value={s}>
+                    Size {s}&quot;
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Add to Cart CTA */}
+          <button
+            onClick={() => {
+              addItem(product, selectedSize, 1);
+            }}
+            className="bg-accent hover:bg-accent-dark text-on-accent font-body text-xs uppercase tracking-wider font-semibold px-4 py-2.5 rounded-full shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition-transform"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+            Add to Bag
+          </button>
+        </div>
+      </div>
     </>
   );
 }

@@ -74,24 +74,25 @@ function AdminSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: (
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-[#0C0A09] border-r border-white/[0.06] flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto",
+          "fixed inset-y-0 left-0 z-50 w-72 bg-[#100e0d]/95 backdrop-blur-2xl border-r border-white/[0.08] flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto shadow-2xl shadow-black/30",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Brand */}
-        <div className="px-6 pt-7 pb-6 border-b border-white/[0.06]">
-          <Link href="/admin" className="block" onClick={onClose}>
-            <p className="font-heading text-xl font-semibold text-white tracking-wide">
+        <div className="px-5 pt-6 pb-5">
+          <Link href="/admin" className="block rounded-2xl border border-[#D4A853]/20 bg-gradient-to-br from-[#A16207]/20 via-[#1c1712] to-transparent p-5 transition-colors hover:border-[#D4A853]/40" onClick={onClose}>
+            <p className="font-heading text-2xl font-semibold text-white tracking-wide">
               Radha Rani
             </p>
-            <p className="font-body text-[8px] tracking-[0.35em] uppercase text-[#D4A853] mt-0.5">
-              Admin Panel
+            <p className="font-body text-[9px] tracking-[0.3em] uppercase text-[#D4A853] mt-1">
+              Atelier Console
             </p>
           </Link>
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-4 py-3 space-y-1.5 overflow-y-auto" aria-label="Admin navigation">
+          <p className="px-3 pb-2 font-body text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30">Operations</p>
           {NAV_ITEMS.map((item) => {
             const isActive =
               item.href === "/admin"
@@ -103,10 +104,10 @@ function AdminSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: (
                 href={item.href}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg font-body text-[13px] transition-all duration-200",
+                  "flex items-center gap-3 px-3 py-3 rounded-xl font-body text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A853]",
                   isActive
-                    ? "bg-[#A16207]/15 text-[#D4A853] font-medium"
-                    : "text-white/50 hover:text-white/80 hover:bg-white/[0.04]"
+                    ? "bg-gradient-to-r from-[#A16207]/25 to-[#A16207]/5 text-[#f4cf7f] font-semibold shadow-[inset_2px_0_0_#D4A853]"
+                    : "text-white/55 hover:text-white/90 hover:bg-white/[0.05]"
                 )}
               >
                 <span className={cn(isActive ? "text-[#D4A853]" : "text-white/40")}>
@@ -119,7 +120,7 @@ function AdminSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: (
         </nav>
 
         {/* Bottom */}
-        <div className="px-3 pb-4 pt-2 border-t border-white/[0.06] space-y-1">
+        <div className="mx-4 mb-4 px-3 py-3 border border-white/[0.07] rounded-2xl bg-white/[0.025] space-y-1">
           <Link
             href="/"
             target="_blank"
@@ -150,12 +151,14 @@ function AdminSidebar({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: (
    ═══════════════════════════════════════════════════ */
 
 function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void }) {
+  const pathname = usePathname();
+  const activeItem = NAV_ITEMS.find((item) => pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href)));
   return (
-    <header className="sticky top-0 z-30 h-14 bg-[#0C0A09]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between px-4 lg:px-6">
+    <header className="sticky top-0 z-30 min-h-[72px] bg-[#100e0d]/75 backdrop-blur-2xl border-b border-white/[0.07] flex items-center justify-between px-4 lg:px-8">
       {/* Mobile hamburger */}
       <button
         onClick={onMenuToggle}
-        className="lg:hidden p-1.5 text-white/60 hover:text-white transition-colors cursor-pointer"
+        className="lg:hidden min-w-11 min-h-11 p-2.5 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A853]"
         aria-label="Toggle sidebar"
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -163,11 +166,19 @@ function AdminHeader({ onMenuToggle }: { onMenuToggle: () => void }) {
         </svg>
       </button>
 
+      <div className="hidden sm:block ml-3">
+        <p className="font-body text-[10px] uppercase tracking-[0.2em] text-white/35">Management</p>
+        <p className="font-heading text-xl font-semibold text-white leading-tight">{activeItem?.label || "Admin"}</p>
+      </div>
+
       <div className="flex-1" />
 
       {/* Admin avatar */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[#A16207]/20 border border-[#A16207]/30 flex items-center justify-center text-[#D4A853] font-body text-xs font-semibold">
+        <div className="hidden md:flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-2 font-body text-[11px] text-white/50">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,.8)]" /> Store online
+        </div>
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#D4A853] to-[#8a5408] border border-[#f4cf7f]/30 flex items-center justify-center text-[#1c1712] font-body text-xs font-bold shadow-lg shadow-[#A16207]/20">
           A
         </div>
         <div className="hidden sm:block">
@@ -194,11 +205,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-[#0C0A09] overflow-hidden">
+    <div className="relative flex h-screen overflow-hidden bg-[#100e0d]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_-8%,rgba(161,98,7,.16),transparent_28%),radial-gradient(circle_at_15%_92%,rgba(212,168,83,.08),transparent_25%)]" />
       <AdminSidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="relative flex-1 flex flex-col min-w-0 overflow-hidden">
         <AdminHeader onMenuToggle={() => setMobileOpen((v) => !v)} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 scroll-smooth">
           {children}
         </main>
       </div>

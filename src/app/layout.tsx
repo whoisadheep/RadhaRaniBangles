@@ -7,6 +7,7 @@ import { LuxuryPreloader } from "@/components/LuxuryPreloader";
 import { CartProvider } from "@/lib/cart";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { WishlistProvider } from "@/lib/wishlist";
+import { CartDrawer } from "@/components/CartDrawer";
 
 export const metadata: Metadata = {
   title: "Radha Rani Bangles | Exquisite Indian Bangles & Jewelry",
@@ -40,6 +41,7 @@ export default function RootLayout({
             <Footer />
             <WhatsAppButton />
             </SmoothScroll>
+            <CartDrawer />
           </WishlistProvider>
         </CartProvider>
       </body>

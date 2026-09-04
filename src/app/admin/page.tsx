@@ -73,18 +73,20 @@ export default function AdminDashboardPage() {
   const totalOrdersCount = orderList.length;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-8">
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
       {/* ─── 1. Page Header ─── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.07] via-white/[0.025] to-[#A16207]/[0.09] p-6 sm:p-8 shadow-2xl shadow-black/10">
+        <div className="pointer-events-none absolute -right-12 -top-16 w-48 h-48 rounded-full bg-[#D4A853]/10 blur-3xl" />
         <div>
-          <h1 className="font-heading text-2xl sm:text-3xl font-bold text-white tracking-wide">
-            Dashboard
+          <p className="font-body text-[10px] uppercase tracking-[0.25em] text-[#D4A853] mb-2">Atelier overview</p>
+          <h1 className="font-heading text-3xl sm:text-4xl font-semibold text-white tracking-wide">
+            Good to see you, Admin.
           </h1>
-          <p className="font-body text-sm text-white/50 mt-1">
-            Welcome back, Admin
+          <p className="font-body text-sm text-white/55 mt-2 max-w-xl">
+            Keep an eye on orders, inventory, and the conversations that shape your next sale.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="relative flex flex-wrap items-center gap-3">
           {supabaseActive ? (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-body text-emerald-400 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -98,7 +100,7 @@ export default function AdminDashboardPage() {
           )}
           <Link
             href="/admin/products"
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#A16207] hover:bg-[#7C4D05] text-white text-xs font-body font-medium transition-colors cursor-pointer shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-[#D4A853] hover:bg-[#f4cf7f] text-[#1c1712] text-xs font-body font-semibold transition-colors cursor-pointer shadow-lg shadow-[#A16207]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A853] focus-visible:ring-offset-2 focus-visible:ring-offset-[#100e0d]"
           >
             <svg
               width="14"
@@ -121,7 +123,7 @@ export default function AdminDashboardPage() {
       {/* ─── 2. KPI Cards Row ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Revenue */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between">
+        <div className="bg-white/[0.045] border border-white/[0.09] rounded-2xl p-5 flex flex-col justify-between shadow-lg shadow-black/10 transition-transform duration-200 hover:-translate-y-0.5">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <svg
@@ -167,7 +169,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Total Orders */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between">
+        <div className="bg-white/[0.045] border border-white/[0.09] rounded-2xl p-5 flex flex-col justify-between shadow-lg shadow-black/10 transition-transform duration-200 hover:-translate-y-0.5">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <svg
@@ -210,7 +212,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Active Products */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between">
+        <div className="bg-white/[0.045] border border-white/[0.09] rounded-2xl p-5 flex flex-col justify-between shadow-lg shadow-black/10 transition-transform duration-200 hover:-translate-y-0.5">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-full bg-[#A16207]/15 border border-[#A16207]/30 flex items-center justify-center text-[#D4A853]">
               <svg
@@ -243,7 +245,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Categories */}
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between">
+        <div className="bg-white/[0.045] border border-white/[0.09] rounded-2xl p-5 flex flex-col justify-between shadow-lg shadow-black/10 transition-transform duration-200 hover:-translate-y-0.5">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
               <svg
@@ -309,7 +311,7 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
 
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-[#191614]/70 backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden shadow-xl shadow-black/15">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[680px]">
               <thead>
@@ -445,7 +447,7 @@ export default function AdminDashboardPage() {
           {topProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 flex items-center gap-3.5 hover:border-[#A16207]/40 transition-colors group"
+              className="bg-white/[0.045] border border-white/[0.09] rounded-2xl p-4 flex items-center gap-3.5 hover:border-[#D4A853]/45 hover:bg-white/[0.07] transition-all duration-200 group"
             >
               {/* Product Image: rounded-lg, 48x48 */}
               <Image

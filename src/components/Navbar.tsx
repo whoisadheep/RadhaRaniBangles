@@ -12,7 +12,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { itemCount } = useCart();
+  const { itemCount, openDrawer } = useCart();
   const { wishlistCount } = useWishlist();
 
   useEffect(() => {
@@ -160,11 +160,12 @@ export function Navbar() {
                 )}
               </Link>
 
-              {/* Cart */}
-              <Link
-                href="/cart"
+              {/* Cart Drawer Trigger */}
+              <button
+                type="button"
+                onClick={openDrawer}
                 className="relative cursor-pointer p-1.5 hover:text-accent transition-colors duration-300"
-                aria-label="Shopping cart"
+                aria-label={`Shopping cart with ${itemCount} items`}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -174,7 +175,7 @@ export function Navbar() {
                 <span className="absolute -top-0.5 -right-0.5 bg-accent text-on-accent text-[9px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
                   {itemCount}
                 </span>
-              </Link>
+              </button>
 
               {/* Account */}
               <Link
@@ -294,16 +295,16 @@ export function Navbar() {
 
             {/* Mobile bottom actions */}
             <div className="absolute bottom-0 left-0 right-0 p-5 border-t border-border bg-cream">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center justify-between">
                 <Link
                   href="/wishlist"
-                  className="flex items-center gap-2 text-xs font-body uppercase tracking-wider text-secondary hover:text-accent transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-body uppercase tracking-wider text-secondary hover:text-accent transition-colors cursor-pointer"
                   onClick={() => setMobileOpen(false)}
                 >
                   <div className="relative">
                     <svg
-                      width="18"
-                      height="18"
+                      width="17"
+                      height="17"
                       viewBox="0 0 24 24"
                       fill={wishlistCount > 0 ? "#A16207" : "none"}
                       stroke={wishlistCount > 0 ? "#A16207" : "currentColor"}
@@ -314,12 +315,31 @@ export function Navbar() {
                   </div>
                   Wishlist {wishlistCount > 0 && <span className="bg-accent text-on-accent text-[10px] px-1.5 py-0.5 rounded-full font-semibold leading-none">{wishlistCount}</span>}
                 </Link>
+
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-xs font-body uppercase tracking-wider text-secondary hover:text-accent transition-colors cursor-pointer"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    openDrawer();
+                  }}
+                >
+                  <div className="relative">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                  </div>
+                  Bag {itemCount > 0 && <span className="bg-accent text-on-accent text-[10px] px-1.5 py-0.5 rounded-full font-semibold leading-none">{itemCount}</span>}
+                </button>
+
                 <Link
                   href="/account"
-                  className="flex items-center gap-2 text-xs font-body uppercase tracking-wider text-secondary hover:text-accent transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 text-xs font-body uppercase tracking-wider text-secondary hover:text-accent transition-colors cursor-pointer"
                   onClick={() => setMobileOpen(false)}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   Account
                 </Link>
               </div>
