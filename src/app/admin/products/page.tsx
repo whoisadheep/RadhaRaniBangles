@@ -54,6 +54,8 @@ export default function ProductsPage() {
     images: [] as string[],
     isNew: false,
     isBestseller: false,
+    isFeatured: false,
+    featuredOrder: "",
   });
 
   const filteredProducts = useMemo(() => {
@@ -66,6 +68,22 @@ export default function ProductsPage() {
       return matchesSearch && matchesCategory;
     });
   }, [productList, searchQuery, selectedCategory]);
+
+  const handleToggleFeatured = async (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextVal = !product.isFeatured;
+    const updated: Product = {
+      ...product,
+      isFeatured: nextVal,
+    };
+
+    setProductList((prev) => prev.map((p) => (p.id === product.id ? updated : p)));
+    try {
+      await upsertProduct(updated);
+    } catch (err) {
+      console.error("Failed to toggle featured status:", err);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
@@ -101,9 +119,11 @@ export default function ProductsPage() {
         "Clean gently with a soft dry microfiber cloth after every wear",
         "Store in individual velvet compartments to prevent abrasions",
       ].join("\n"),
-      images: ["/images/hero-bangles.png"],
+      images: [],
       isNew: true,
       isBestseller: false,
+      isFeatured: false,
+      featuredOrder: "",
     });
     setIsModalOpen(true);
   };
@@ -136,9 +156,11 @@ export default function ProductsPage() {
           "Store separately to prevent scratches",
         ]
       ).join("\n"),
-      images: product.images.length > 0 ? [...product.images] : ["/images/hero-bangles.png"],
+      images: [...product.images],
       isNew: product.isNew || false,
       isBestseller: product.isBestseller || false,
+      isFeatured: product.isFeatured || false,
+      featuredOrder: product.featuredOrder !== undefined ? product.featuredOrder.toString() : "",
     });
     setIsModalOpen(true);
   };
@@ -221,10 +243,7 @@ export default function ProductsPage() {
         formData.images.map((img) => uploadProductImage(img))
       );
 
-      const safeImages =
-        uploadedImages.filter(Boolean).length > 0
-          ? uploadedImages.filter(Boolean)
-          : ["/images/hero-bangles.png"];
+      const safeImages = uploadedImages.filter(Boolean);
 
       const category = categories.find((c) => c.slug === formData.categorySlug)?.name || "Gold Bangles";
       const careInstructions = formData.careInstructionsText
@@ -253,6 +272,8 @@ export default function ProductsPage() {
           images: safeImages,
           isNew: formData.isNew,
           isBestseller: formData.isBestseller,
+          isFeatured: formData.isFeatured,
+          featuredOrder: formData.featuredOrder ? Number(formData.featuredOrder) : undefined,
         };
 
         setProductList((prev) =>
@@ -284,6 +305,8 @@ export default function ProductsPage() {
           images: safeImages,
           isNew: formData.isNew,
           isBestseller: formData.isBestseller,
+          isFeatured: formData.isFeatured,
+          featuredOrder: formData.featuredOrder ? Number(formData.featuredOrder) : undefined,
           rating: 5.0,
           reviews: 1,
         };
@@ -384,7 +407,8 @@ export default function ProductsPage() {
                 <th className="px-6 py-4">Bangle</th>
                 <th className="px-6 py-4">Price</th>
                 <th className="px-6 py-4">Material & Weight</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Tags</th>
+                <th className="px-6 py-4">Homepage ⭐</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -452,6 +476,31 @@ export default function ProductsPage() {
                         <span className="text-white/30 text-xs">—</span>
                       )}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleFeatured(product, e)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer",
+                        product.isFeatured
+                          ? "bg-[#D4A853]/20 border border-[#D4A853]/40 text-[#D4A853] hover:bg-[#D4A853]/30"
+                          : "bg-white/[0.04] border border-white/[0.08] text-white/30 hover:text-white/70 hover:border-white/20"
+                      )}
+                      title={product.isFeatured ? "Featured on Homepage (Click to unpin)" : "Click to feature on Homepage"}
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill={product.isFeatured ? "#D4A853" : "none"}
+                        stroke={product.isFeatured ? "#D4A853" : "currentColor"}
+                        strokeWidth="2"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span>{product.isFeatured ? `Homepage${product.featuredOrder ? ` #${product.featuredOrder}` : ""}` : "Not pinned"}</span>
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-2">
@@ -765,7 +814,65 @@ export default function ProductsPage() {
                         Mark as Bestseller
                       </span>
                     </label>
+
+                    <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                      <div
+                        className={cn(
+                          "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                          formData.isFeatured
+                            ? "bg-[#D4A853] border-[#D4A853]"
+                            : "bg-transparent border-white/20 group-hover:border-white/40"
+                        )}
+                      >
+                        {formData.isFeatured && (
+                          <svg
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            className="w-3 h-3 text-[#100e0d]"
+                          >
+                            <path
+                              d="M11.6666 3.5L5.24992 9.91667L2.33325 7"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={formData.isFeatured}
+                        onChange={(e) =>
+                          setFormData({ ...formData, isFeatured: e.target.checked })
+                        }
+                      />
+                      <span className="text-sm text-white/80 group-hover:text-white flex items-center gap-1.5">
+                        <span className="text-[#D4A853]">⭐</span> Feature on Homepage
+                      </span>
+                    </label>
                   </div>
+
+                  {formData.isFeatured && (
+                    <div className="p-3.5 rounded-xl bg-[#D4A853]/10 border border-[#D4A853]/25 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold text-[#D4A853]">Homepage Position Order</p>
+                        <p className="text-[11px] text-white/50">Position #1 appears first in the Curated showcase</p>
+                      </div>
+                      <input
+                        type="number"
+                        min={1}
+                        max={99}
+                        value={formData.featuredOrder}
+                        onChange={(e) =>
+                          setFormData({ ...formData, featuredOrder: e.target.value })
+                        }
+                        placeholder="e.g. 1"
+                        className="w-24 bg-black/40 border border-[#D4A853]/40 rounded-lg px-3 py-1.5 text-white text-sm text-center font-semibold focus:outline-none focus:border-[#D4A853]"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -831,7 +938,7 @@ export default function ProductsPage() {
                         Current Photos ({formData.images.length})
                       </p>
                       <p className="text-[11px] text-white/40">
-                        First image is the primary cover photo
+                        The first uploaded image becomes the cover photo
                       </p>
                     </div>
 
@@ -867,7 +974,8 @@ export default function ProductsPage() {
                             <button
                               type="button"
                               onClick={() => handleRemoveImage(index)}
-                              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/70 hover:bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-md"
+                              className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-black/80 hover:bg-red-500 text-white flex items-center justify-center opacity-100 transition-colors cursor-pointer shadow-lg ring-1 ring-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                              aria-label={`Remove photo ${index + 1}`}
                               title="Remove photo"
                             >
                               <svg
@@ -888,7 +996,7 @@ export default function ProductsPage() {
                       </div>
                     ) : (
                       <p className="text-xs text-amber-300/80 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                        No photos added yet. Please upload at least one image or paste an image URL below.
+                        No photos added yet. Add one when you are ready; the first photo will become the cover.
                       </p>
                     )}
                   </div>

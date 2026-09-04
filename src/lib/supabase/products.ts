@@ -41,6 +41,8 @@ export async function fetchProducts(): Promise<Product[]> {
       careInstructions: item.care_instructions,
       isNew: item.is_new,
       isBestseller: item.is_bestseller,
+      isFeatured: item.is_featured !== undefined ? Boolean(item.is_featured) : Boolean(item.is_bestseller),
+      featuredOrder: item.featured_order ? Number(item.featured_order) : undefined,
       rating: Number(item.rating) || 5.0,
       reviews: Number(item.reviews) || 0,
     }));
@@ -59,7 +61,7 @@ export async function upsertProduct(product: Product): Promise<Product> {
     return product;
   }
 
-  const payload = {
+  const payload: any = {
     id: product.id,
     slug: product.slug,
     name: product.name,
@@ -83,7 +85,23 @@ export async function upsertProduct(product: Product): Promise<Product> {
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase.from("products").upsert(payload, { onConflict: "id" });
+  if (product.isFeatured !== undefined) {
+    payload.is_featured = Boolean(product.isFeatured);
+  }
+  if (product.featuredOrder !== undefined) {
+    payload.featured_order = product.featuredOrder;
+  }
+
+  let { error } = await supabase.from("products").upsert(payload, { onConflict: "id" });
+
+  // If the remote schema doesn't yet have the is_featured column, fallback gracefully
+  if (error && (error.message?.includes("is_featured") || error.message?.includes("featured_order"))) {
+    delete payload.is_featured;
+    delete payload.featured_order;
+    const retry = await supabase.from("products").upsert(payload, { onConflict: "id" });
+    error = retry.error;
+  }
+
   if (error) {
     console.error("Failed to upsert product in Supabase:", error);
     throw error;

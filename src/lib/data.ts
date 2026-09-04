@@ -12,6 +12,8 @@ export interface Product {
   reviews: number;
   isNew?: boolean;
   isBestseller?: boolean;
+  isFeatured?: boolean;
+  featuredOrder?: number;
   material: string;
   weight?: string;
   size?: string;

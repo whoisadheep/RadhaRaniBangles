@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { products, categories, testimonials, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
@@ -191,12 +191,27 @@ export default function HomePage() {
     loadLiveProducts();
   }, []);
 
-  const filteredProducts =
-    activeTab === "all"
-      ? productList.slice(0, 8)
-      : activeTab === "bestseller"
-        ? productList.filter((p) => p.isBestseller).slice(0, 8)
-        : productList.filter((p) => p.isNew).slice(0, 8);
+  const filteredProducts = useMemo(() => {
+    if (activeTab === "bestseller") {
+      return productList.filter((p) => p.isBestseller).slice(0, 8);
+    }
+    if (activeTab === "new") {
+      return productList.filter((p) => p.isNew).slice(0, 8);
+    }
+
+    // Default "All" tab: prioritize products marked as isFeatured in Admin
+    const featured = productList
+      .filter((p) => p.isFeatured)
+      .sort((a, b) => (a.featuredOrder ?? 99) - (b.featuredOrder ?? 99));
+
+    // If fewer than 8 featured items exist, backfill with remaining catalog
+    if (featured.length < 8) {
+      const remaining = productList.filter((p) => !featured.some((f) => f.id === p.id));
+      return [...featured, ...remaining].slice(0, 8);
+    }
+
+    return featured.slice(0, 8);
+  }, [productList, activeTab]);
 
   const instagramImages = [
     { id: 1, src: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80", tag: "@radharanibangles" },
