@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { products as fallbackProducts, categories, Product } from "@/lib/data";
 import { formatPrice, getDiscountPercentage, cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
@@ -17,7 +18,9 @@ const sortOptions = [
   { label: "Best Rating", value: "rating" },
 ];
 
-export default function CollectionsPage() {
+function CollectionsContent() {
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category");
   const [productList, setProductList] = useState<Product[]>(fallbackProducts);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState("featured");
@@ -46,6 +49,12 @@ export default function CollectionsPage() {
     }
     loadLiveProducts();
   }, []);
+
+  useEffect(() => {
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [categoryParam]);
 
   const filtered = productList
     .filter(
@@ -130,7 +139,7 @@ export default function CollectionsPage() {
                       >
                         {cat.name}
                         <span className="float-right text-xs text-muted-foreground">
-                          {cat.productCount}
+                          {productList.filter((p) => p.categorySlug === cat.slug).length}
                         </span>
                       </button>
                     </li>
@@ -452,5 +461,19 @@ export default function CollectionsPage() {
         </div>
       </section>
     </>
+  );
+}
+
+export default function CollectionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <CollectionsContent />
+    </Suspense>
   );
 }

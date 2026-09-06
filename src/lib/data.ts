@@ -50,7 +50,7 @@ export const categories: Category[] = [
     slug: "gold-bangles",
     image: "/images/categories/gold-bangles.png",
     description: "Timeless 22K gold bangles crafted with precision",
-    productCount: 48,
+    productCount: 3,
   },
   {
     id: "cat-2",
@@ -58,7 +58,7 @@ export const categories: Category[] = [
     slug: "silver-bangles",
     image: "/images/categories/silver-bangles.png",
     description: "Elegant sterling silver pieces for everyday grace",
-    productCount: 36,
+    productCount: 2,
   },
   {
     id: "cat-3",
@@ -66,7 +66,7 @@ export const categories: Category[] = [
     slug: "diamond-bangles",
     image: "/images/categories/diamond-bangles.png",
     description: "Sparkling diamond-studded bangles for special moments",
-    productCount: 24,
+    productCount: 2,
   },
   {
     id: "cat-4",
@@ -74,7 +74,7 @@ export const categories: Category[] = [
     slug: "kundan-bangles",
     image: "/images/categories/kundan-bangles.png",
     description: "Traditional Kundan artistry meets modern design",
-    productCount: 32,
+    productCount: 2,
   },
   {
     id: "cat-5",
@@ -82,7 +82,7 @@ export const categories: Category[] = [
     slug: "bridal-sets",
     image: "/images/categories/bridal-sets.png",
     description: "Complete bridal bangle sets for your special day",
-    productCount: 18,
+    productCount: 1,
   },
   {
     id: "cat-6",
@@ -90,7 +90,7 @@ export const categories: Category[] = [
     slug: "daily-wear",
     image: "/images/categories/daily-wear.png",
     description: "Lightweight, comfortable bangles for every day",
-    productCount: 52,
+    productCount: 2,
   },
 ];
 

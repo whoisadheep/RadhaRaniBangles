@@ -8,6 +8,7 @@ import { useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useQuickView } from "@/lib/quick-view";
 import { fetchProducts } from "@/lib/supabase/products";
+import { fetchAllReviews, Review, INITIAL_REAL_REVIEWS } from "@/lib/supabase/reviews";
 
 /* ═══════════════════════════════════════════════
    Product Card
@@ -213,6 +214,7 @@ function ProductCard({ product }: { product: typeof products[number] }) {
 export default function HomePage() {
   const [productList, setProductList] = useState<Product[]>(products);
   const [activeTab, setActiveTab] = useState<"all" | "bestseller" | "new">("all");
+  const [realReviews, setRealReviews] = useState<Review[]>(INITIAL_REAL_REVIEWS);
 
   useEffect(() => {
     async function loadLiveProducts() {
@@ -225,7 +227,20 @@ export default function HomePage() {
         console.error("Homepage fetchProducts error:", err);
       }
     }
+
+    async function loadLiveReviews() {
+      try {
+        const reviews = await fetchAllReviews();
+        if (reviews && reviews.length > 0) {
+          setRealReviews(reviews);
+        }
+      } catch (err) {
+        console.error("Homepage fetchReviews error:", err);
+      }
+    }
+
     loadLiveProducts();
+    loadLiveReviews();
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -236,18 +251,16 @@ export default function HomePage() {
       return productList.filter((p) => p.isNew).slice(0, 8);
     }
 
-    // Default "All" tab: prioritize products marked as isFeatured in Admin
+    // Default "All" tab: if admin has pinned featured products, show them in order
     const featured = productList
       .filter((p) => p.isFeatured)
       .sort((a, b) => (a.featuredOrder ?? 99) - (b.featuredOrder ?? 99));
 
-    // If fewer than 8 featured items exist, backfill with remaining catalog
-    if (featured.length < 8) {
-      const remaining = productList.filter((p) => !featured.some((f) => f.id === p.id));
-      return [...featured, ...remaining].slice(0, 8);
+    if (featured.length > 0) {
+      return featured;
     }
 
-    return featured.slice(0, 8);
+    return productList.slice(0, 8);
   }, [productList, activeTab]);
 
   const instagramImages = [
@@ -412,31 +425,34 @@ export default function HomePage() {
 
           {/* Category Grid with Real Photos */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 lg:gap-8">
-            {categories.map((cat, i) => (
-              <Link
-                key={cat.id}
-                href={`/collections`}
-                className={cn(
-                  "group text-center cursor-pointer animate-fade-in-up",
-                  `stagger-${i + 1}`
-                )}
-              >
-                <div className="relative mx-auto w-28 h-28 sm:w-32 sm:h-32 lg:w-36 lg:h-36 rounded-full bg-gradient-to-br from-white via-cream to-champagne/80 border-2 border-accent/20 group-hover:border-accent p-3 flex items-center justify-center transition-all duration-500 group-hover:shadow-[0_15px_35px_rgba(161,98,7,0.2)] group-hover:scale-105 shadow-sm">
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.12)] transition-transform duration-700 group-hover:scale-110 group-hover:-translate-y-0.5 select-none"
-                    loading="lazy"
-                  />
-                </div>
-                <h3 className="font-heading text-base sm:text-lg font-semibold text-primary mt-4 group-hover:text-accent transition-colors duration-300">
-                  {cat.name}
-                </h3>
-                <p className="font-body text-xs text-muted-foreground mt-0.5">
-                  {cat.productCount} pieces
-                </p>
-              </Link>
-            ))}
+            {categories.map((cat, i) => {
+              const realCount = productList.filter((p) => p.categorySlug === cat.slug).length;
+              return (
+                <Link
+                  key={cat.id}
+                  href={`/collections?category=${cat.slug}`}
+                  className={cn(
+                    "group text-center cursor-pointer animate-fade-in-up",
+                    `stagger-${i + 1}`
+                  )}
+                >
+                  <div className="relative mx-auto w-28 h-28 sm:w-32 sm:h-32 lg:w-36 lg:h-36 rounded-full bg-gradient-to-br from-white via-cream to-champagne/80 border-2 border-accent/20 group-hover:border-accent p-3 flex items-center justify-center transition-all duration-500 group-hover:shadow-[0_15px_35px_rgba(161,98,7,0.2)] group-hover:scale-105 shadow-sm">
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.12)] transition-transform duration-700 group-hover:scale-110 group-hover:-translate-y-0.5 select-none"
+                      loading="lazy"
+                    />
+                  </div>
+                  <h3 className="font-heading text-base sm:text-lg font-semibold text-primary mt-4 group-hover:text-accent transition-colors duration-300">
+                    {cat.name}
+                  </h3>
+                  <p className="font-body text-xs text-muted-foreground mt-0.5 font-medium">
+                    {realCount > 0 ? `${realCount} ${realCount === 1 ? "design" : "designs"}` : "Explore"}
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -566,51 +582,62 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {testimonials.slice(0, 3).map((t, i) => (
+            {realReviews.slice(0, 3).map((r, i) => (
               <div
-                key={t.id}
+                key={r.id}
                 className={cn(
                   "glass-gold rounded-2xl p-8 hover:shadow-[0_12px_40px_rgba(161,98,7,0.12)] transition-all duration-500 hover:-translate-y-1 animate-fade-in-up flex flex-col justify-between",
                   `stagger-${i + 1}`
                 )}
               >
                 <div>
-                  {/* Quote icon */}
-                  <svg
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="text-accent/40 mb-4"
-                  >
-                    <path
-                      d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"
-                      fill="currentColor"
-                    />
-                    <path
-                      d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  {/* Quote icon & Verified badge */}
+                  <div className="flex items-center justify-between mb-4">
+                    <svg
+                      width="30"
+                      height="30"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="text-accent/40"
+                    >
+                      <path
+                        d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"
+                        fill="currentColor"
+                      />
+                      <path
+                        d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {r.verifiedPurchase && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-body uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full font-semibold">
+                        <span>✓</span> Verified Buyer
+                      </span>
+                    )}
+                  </div>
 
-                  <p className="font-heading text-base sm:text-lg italic leading-relaxed text-card-foreground">
-                    &ldquo;{t.text}&rdquo;
+                  {r.title && (
+                    <p className="font-heading text-base font-semibold text-primary mb-2">
+                      {r.title}
+                    </p>
+                  )}
+
+                  <p className="font-body text-sm italic leading-relaxed text-secondary">
+                    &ldquo;{r.comment}&rdquo;
                   </p>
                 </div>
 
                 <div className="mt-8 flex items-center gap-3 pt-4 border-t border-border/40">
-                  {/* Avatar */}
-                  <img
-                    src={t.avatar}
-                    alt={t.name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-accent/30 shadow-sm"
-                  />
+                  {/* Monogram Avatar */}
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-accent/25 to-champagne border-2 border-accent/40 flex items-center justify-center font-heading text-base font-bold text-accent shadow-xs flex-shrink-0">
+                    {r.authorName ? r.authorName.charAt(0) : "R"}
+                  </div>
                   <div>
                     <p className="font-body text-sm font-semibold text-primary">
-                      {t.name}
+                      {r.authorName}
                     </p>
                     <p className="font-body text-xs text-muted-foreground">
-                      {t.location}
+                      {r.authorLocation || "Verified Customer"}
                     </p>
                   </div>
                   <div className="ml-auto flex">
@@ -620,7 +647,7 @@ export default function HomePage() {
                         width="13"
                         height="13"
                         viewBox="0 0 24 24"
-                        fill={s <= t.rating ? "#A16207" : "none"}
+                        fill={s <= r.rating ? "#A16207" : "none"}
                         stroke="#A16207"
                         strokeWidth="1.5"
                       >

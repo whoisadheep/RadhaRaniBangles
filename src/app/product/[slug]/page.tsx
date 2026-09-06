@@ -11,6 +11,7 @@ import { useWishlist } from "@/lib/wishlist";
 import { useQuickView } from "@/lib/quick-view";
 import { fetchProducts } from "@/lib/supabase/products";
 import { SizeGuideModal } from "@/components/SizeGuideModal";
+import { fetchReviewsByProduct, submitReview, Review } from "@/lib/supabase/reviews";
 
 export default function ProductPage() {
   const params = useParams();
@@ -48,6 +49,74 @@ export default function ProductPage() {
   const { addItem } = useCart();
   const buyButtonRef = useRef<HTMLDivElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
+
+  // Live real reviews state
+  const [reviewsList, setReviewsList] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewAuthor, setReviewAuthor] = useState("");
+  const [reviewLocation, setReviewLocation] = useState("");
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+
+  useEffect(() => {
+    if (!product?.id) return;
+    let isMounted = true;
+    setReviewsLoading(true);
+    fetchReviewsByProduct(product.id)
+      .then((data) => {
+        if (isMounted) setReviewsList(data);
+      })
+      .finally(() => {
+        if (isMounted) setReviewsLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [product?.id]);
+
+  const displayReviewCount = reviewsList.length > 0 ? reviewsList.length : (product?.reviews || 0);
+  const displayRating = reviewsList.length > 0
+    ? (reviewsList.reduce((acc, r) => acc + r.rating, 0) / reviewsList.length).toFixed(1)
+    : (product?.rating ? product.rating.toFixed(1) : "5.0");
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product || !reviewAuthor.trim() || !reviewComment.trim()) return;
+
+    setSubmittingReview(true);
+    try {
+      const newReview = await submitReview({
+        productId: product.id,
+        authorName: reviewAuthor.trim(),
+        authorLocation: reviewLocation.trim() || undefined,
+        rating: reviewRating,
+        title: reviewTitle.trim() || undefined,
+        comment: reviewComment.trim(),
+        verifiedPurchase: true,
+      });
+
+      setReviewsList((prev) => [newReview, ...prev]);
+      setReviewSuccess(true);
+      setTimeout(() => {
+        setShowReviewModal(false);
+        setReviewSuccess(false);
+        setReviewAuthor("");
+        setReviewLocation("");
+        setReviewTitle("");
+        setReviewComment("");
+        setReviewRating(5);
+      }, 1500);
+    } catch (err) {
+      console.error("Failed to submit review:", err);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   // Sync activeImage once product loads
   useEffect(() => {
@@ -192,7 +261,7 @@ export default function ProductPage() {
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
-                      fill={star <= Math.round(product.rating) ? "#A16207" : "none"}
+                      fill={star <= Math.round(Number(displayRating)) ? "#A16207" : "none"}
                       stroke="#A16207"
                       strokeWidth="1.5"
                     >
@@ -200,9 +269,16 @@ export default function ProductPage() {
                     </svg>
                   ))}
                 </div>
-                <span className="font-body text-sm text-muted-foreground">
-                  {product.rating} ({product.reviews} reviews)
-                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("reviews");
+                    document.getElementById("product-tabs")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="font-body text-sm text-muted-foreground hover:text-accent transition-colors cursor-pointer"
+                >
+                  {displayRating} ({displayReviewCount} {displayReviewCount === 1 ? "review" : "reviews"})
+                </button>
               </div>
 
               {/* Price */}
@@ -369,12 +445,12 @@ export default function ProductPage() {
           </div>
 
           {/* ── Tabs ── */}
-          <div className="mt-16 lg:mt-24">
+          <div id="product-tabs" className="mt-16 lg:mt-24">
             <div className="flex border-b border-border overflow-x-auto">
               {[
                 { key: "description" as const, label: "Description" },
                 { key: "details" as const, label: "Details & Care" },
-                { key: "reviews" as const, label: `Reviews (${product.reviews})` },
+                { key: "reviews" as const, label: `Reviews (${displayReviewCount})` },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -391,9 +467,9 @@ export default function ProductPage() {
               ))}
             </div>
 
-            <div className="py-8 max-w-3xl">
+            <div className="py-8">
               {activeTab === "description" && (
-                <div className="font-body text-sm text-secondary leading-relaxed space-y-4 animate-fade-in-up">
+                <div className="max-w-3xl font-body text-sm text-secondary leading-relaxed space-y-4 animate-fade-in-up">
                   <p>{product.description}</p>
                   <p>
                     {product.craftsmanshipDetails ||
@@ -403,7 +479,7 @@ export default function ProductPage() {
               )}
 
               {activeTab === "details" && (
-                <div className="animate-fade-in-up">
+                <div className="max-w-3xl animate-fade-in-up">
                   <dl className="space-y-3">
                     {[
                       { term: "Material", def: product.material },
@@ -440,25 +516,162 @@ export default function ProductPage() {
               )}
 
               {activeTab === "reviews" && (
-                <div className="animate-fade-in-up">
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="text-center">
-                      <p className="font-heading text-4xl font-bold text-primary">{product.rating}</p>
-                      <div className="flex mt-1">
+                <div className="animate-fade-in-up space-y-8 max-w-4xl">
+                  {/* Summary Card */}
+                  <div className="p-6 sm:p-8 rounded-2xl bg-champagne/40 border border-border/60 flex flex-col md:flex-row items-center justify-between gap-6">
+                    {/* Left: Overall Score */}
+                    <div className="text-center md:text-left shrink-0">
+                      <div className="flex items-baseline justify-center md:justify-start gap-2">
+                        <span className="font-heading text-5xl font-bold text-primary">{displayRating}</span>
+                        <span className="font-body text-sm text-muted-foreground">/ 5.0</span>
+                      </div>
+                      <div className="flex justify-center md:justify-start gap-1 my-2">
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill={s <= Math.round(product.rating) ? "#A16207" : "none"} stroke="#A16207" strokeWidth="1.5">
+                          <svg
+                            key={s}
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill={s <= Math.round(Number(displayRating)) ? "#A16207" : "none"}
+                            stroke="#A16207"
+                            strokeWidth="1.5"
+                          >
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                           </svg>
                         ))}
                       </div>
-                      <p className="font-body text-xs text-muted-foreground mt-1">
-                        {product.reviews} reviews
+                      <p className="font-body text-xs text-muted-foreground">
+                        Based on {displayReviewCount} verified {displayReviewCount === 1 ? "review" : "reviews"}
                       </p>
                     </div>
+
+                    {/* Center: Rating Breakdown Bars */}
+                    <div className="w-full max-w-xs space-y-2">
+                      {[5, 4, 3, 2, 1].map((stars) => {
+                        const count = reviewsList.filter((r) => Math.round(r.rating) === stars).length;
+                        const pct = reviewsList.length > 0 ? Math.round((count / reviewsList.length) * 100) : stars === 5 ? 100 : 0;
+                        return (
+                          <div key={stars} className="flex items-center gap-2 text-xs font-body">
+                            <span className="w-6 text-muted-foreground font-medium">{stars}★</span>
+                            <div className="flex-1 h-2 bg-border/60 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-accent rounded-full transition-all duration-500"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="w-8 text-right text-muted-foreground">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right: Write Review CTA */}
+                    <div className="shrink-0 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowReviewModal(true)}
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-accent text-white font-body text-xs sm:text-sm font-semibold tracking-wider uppercase hover:bg-accent-hover transition-all duration-300 shadow-md cursor-pointer hover:shadow-lg active:scale-95"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                        Write a Review
+                      </button>
+                      <p className="font-body text-[11px] text-muted-foreground mt-2">Verified buyer reviews only</p>
+                    </div>
                   </div>
-                  <p className="font-body text-sm text-muted-foreground italic">
-                    Customer reviews will be displayed here.
-                  </p>
+
+                  {/* Reviews List */}
+                  {reviewsLoading ? (
+                    <div className="py-12 flex justify-center">
+                      <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : reviewsList.length === 0 ? (
+                    <div className="text-center py-12 border border-dashed border-border rounded-2xl p-8">
+                      <p className="font-heading text-lg text-primary mb-1">Be the First to Review</p>
+                      <p className="font-body text-sm text-muted-foreground mb-4">
+                        Share your experience and thoughts about the handcrafted {product.name}.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowReviewModal(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent/10 border border-accent/20 text-accent font-body text-xs font-semibold uppercase tracking-wider hover:bg-accent hover:text-white transition-colors cursor-pointer"
+                      >
+                        Leave First Review
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {reviewsList.map((rev) => (
+                        <div
+                          key={rev.id}
+                          className="p-5 sm:p-6 rounded-2xl bg-card border border-border/60 hover:border-accent/30 transition-all duration-300 space-y-3"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center font-heading text-sm font-bold text-accent shrink-0">
+                                {rev.authorName
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .slice(0, 2)
+                                  .toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h5 className="font-body font-semibold text-primary text-sm sm:text-base">
+                                    {rev.authorName}
+                                  </h5>
+                                  {rev.verifiedPurchase && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 font-body text-[10px] font-medium">
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                      Verified Buyer
+                                    </span>
+                                  )}
+                                </div>
+                                {rev.authorLocation && (
+                                  <p className="font-body text-xs text-muted-foreground">{rev.authorLocation}</p>
+                                )}
+                              </div>
+                            </div>
+                            <span className="font-body text-xs text-muted-foreground shrink-0">
+                              {new Date(rev.createdAt).toLocaleDateString("en-IN", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </div>
+
+                          {/* Stars */}
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <svg
+                                key={star}
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill={star <= rev.rating ? "#A16207" : "none"}
+                                stroke="#A16207"
+                                strokeWidth="1.5"
+                              >
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                              </svg>
+                            ))}
+                          </div>
+
+                          {/* Title & Comment */}
+                          {rev.title && (
+                            <h6 className="font-heading text-base font-semibold text-primary">{rev.title}</h6>
+                          )}
+                          <p className="font-body text-sm text-secondary leading-relaxed">{rev.comment}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -592,6 +805,161 @@ export default function ProductPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Interactive Write Review Modal ── */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="relative w-full max-w-lg bg-background rounded-2xl border border-border shadow-2xl p-6 sm:p-8 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => !submittingReview && setShowReviewModal(false)}
+              className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-primary transition-colors cursor-pointer rounded-lg hover:bg-muted"
+              aria-label="Close"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            <div className="mb-6">
+              <span className="font-body text-[10px] uppercase tracking-[0.2em] font-semibold text-accent">
+                Customer Feedback
+              </span>
+              <h3 className="font-heading text-2xl font-bold text-primary mt-1">Write a Review</h3>
+              <p className="font-body text-xs text-muted-foreground mt-1">
+                Reviewing <span className="font-medium text-primary">{product.name}</span>
+              </p>
+            </div>
+
+            {reviewSuccess ? (
+              <div className="py-8 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 flex items-center justify-center mx-auto text-xl font-bold">
+                  ✓
+                </div>
+                <h4 className="font-heading text-lg font-bold text-primary">Thank You!</h4>
+                <p className="font-body text-sm text-muted-foreground">
+                  Your review has been verified and published to the live storefront.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleReviewSubmit} className="space-y-4">
+                <div>
+                  <label className="block font-body text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+                    Your Rating *
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="p-1 cursor-pointer transition-transform hover:scale-110"
+                      >
+                        <svg
+                          width="28"
+                          height="28"
+                          viewBox="0 0 24 24"
+                          fill={star <= (hoverRating || reviewRating) ? "#A16207" : "none"}
+                          stroke="#A16207"
+                          strokeWidth="1.5"
+                        >
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                      </button>
+                    ))}
+                    <span className="font-body text-xs text-muted-foreground ml-2">
+                      {hoverRating || reviewRating} / 5 Stars
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-body text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
+                      Your Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={reviewAuthor}
+                      onChange={(e) => setReviewAuthor(e.target.value)}
+                      placeholder="e.g. Priya Sharma"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-card text-foreground font-body text-sm focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-body text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
+                      City / Location
+                    </label>
+                    <input
+                      type="text"
+                      value={reviewLocation}
+                      onChange={(e) => setReviewLocation(e.target.value)}
+                      placeholder="e.g. Jaipur, Rajasthan"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-card text-foreground font-body text-sm focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-body text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
+                    Review Headline
+                  </label>
+                  <input
+                    type="text"
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    placeholder="e.g. Magnificent craftsmanship & pure gold sheen"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-card text-foreground font-body text-sm focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-body text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
+                    Review Details *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Describe the fit, shine, polish, packaging, and your overall experience..."
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-card text-foreground font-body text-sm focus:outline-none focus:border-accent resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/60">
+                  <button
+                    type="button"
+                    disabled={submittingReview}
+                    onClick={() => setShowReviewModal(false)}
+                    className="px-4 py-2.5 rounded-lg border border-border text-secondary font-body text-xs uppercase tracking-wider font-medium hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingReview || !reviewAuthor.trim() || !reviewComment.trim()}
+                    className="px-6 py-2.5 rounded-lg bg-accent text-white font-body text-xs uppercase tracking-wider font-semibold hover:bg-accent-hover transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-2"
+                  >
+                    {submittingReview ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Review"
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Interactive Bangle Size Guide Modal ── */}
       <SizeGuideModal

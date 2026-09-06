@@ -41,7 +41,7 @@ export async function fetchProducts(): Promise<Product[]> {
       careInstructions: item.care_instructions,
       isNew: item.is_new,
       isBestseller: item.is_bestseller,
-      isFeatured: item.is_featured !== undefined ? Boolean(item.is_featured) : Boolean(item.is_bestseller),
+      isFeatured: Boolean(item.is_featured),
       featuredOrder: item.featured_order ? Number(item.featured_order) : undefined,
       rating: Number(item.rating) || 5.0,
       reviews: Number(item.reviews) || 0,
