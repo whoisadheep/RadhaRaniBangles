@@ -373,10 +373,14 @@ export default function HomePage() {
                 {/* Hero Bangles Transparent Cutout */}
                 <div className="relative z-10 animate-float will-change-transform [transform:translateZ(0)]">
                   <img
-                    src="/images/hero-bangles.png"
+                    src="/images/hero-bangles.webp"
                     alt="Radha Rani Luxury Bangles Showcase"
+                    width={960}
+                    height={640}
+                    fetchPriority="high"
                     className="w-full h-auto object-contain max-h-[500px] drop-shadow-[0_20px_30px_rgba(0,0,0,0.12)] transition-transform duration-500 hover:scale-105 select-none"
                     loading="eager"
+                    decoding="async"
                   />
                 </div>
 

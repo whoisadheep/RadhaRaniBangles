@@ -16,7 +16,7 @@ import { products, categories, testimonials } from "@/lib/data";
    the site is revealed.
    ═══════════════════════════════════════════════════ */
 
-const CRITICAL_IMAGES = ["/images/hero-bangles.png"];
+const CRITICAL_IMAGES = ["/images/hero-bangles.webp"];
 
 const LUXURY_PHRASES = [
   "Awakening Royal Heritage…",
@@ -24,6 +24,20 @@ const LUXURY_PHRASES = [
   "Polishing Precious Stones…",
   "Unveiling Timeless Grace…",
 ];
+
+function preloadImage(src: string) {
+  return new Promise<void>((resolve) => {
+    const image = new Image();
+    const finish = () => resolve();
+    image.onload = finish;
+    image.onerror = finish;
+    image.src = src;
+
+    if (image.complete) {
+      image.decode?.().catch(() => undefined).finally(finish);
+    }
+  });
+}
 
 /* ── Dust Motes: tiny gold sparks that burst outward ── */
 const DUST_PARTICLES = Array.from({ length: 12 }, (_, i) => {
@@ -73,33 +87,36 @@ export function LuxuryPreloader() {
 
     document.body.style.overflow = "hidden";
 
-    // Only preload the critical above-the-fold hero image
-    CRITICAL_IMAGES.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
+    let cancelled = false;
+    const wait = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration));
 
-    const startTime = Date.now();
-    const duration = 1000; // Snappy 1 second intro
+    async function loadCriticalImages() {
+      setProgress(12);
+      setPhraseIndex(0);
+      await wait(140);
+      if (cancelled) return;
 
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(100, Math.round((elapsed / duration) * 100));
+      setProgress(35);
+      setPhraseIndex(1);
+      const allImagesReady = Promise.all(CRITICAL_IMAGES.map(preloadImage));
+      // A slow or unavailable image should never trap a visitor behind the loader.
+      await Promise.race([allImagesReady, wait(3000)]);
+      if (cancelled) return;
 
-      setProgress(pct);
-      if (pct >= 75) setPhraseIndex(3);
-      else if (pct >= 50) setPhraseIndex(2);
-      else if (pct >= 25) setPhraseIndex(1);
-      else setPhraseIndex(0);
+      setProgress(88);
+      setPhraseIndex(3);
+      await wait(180);
+      if (cancelled) return;
 
-      if (pct >= 100) {
-        clearInterval(interval);
-        setTimeout(triggerExit, 250);
-      }
-    }, 40);
+      setProgress(100);
+      await wait(160);
+      if (!cancelled) triggerExit();
+    }
+
+    loadCriticalImages();
 
     return () => {
-      clearInterval(interval);
+      cancelled = true;
       document.body.style.overflow = "";
     };
   }, [pathname, triggerExit]);
